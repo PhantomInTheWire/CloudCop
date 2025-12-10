@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   postgres:
     image: postgres:15
@@ -17,39 +19,41 @@ services:
     container_name: cs_localstack
     environment:
       SERVICES: s3,ec2,iam,lambda,dynamodb,sts,cloudformation
-      PERSISTENCE: 1
+      DEFAULT_REGION: us-east-1
+      DATA_DIR: /tmp/localstack/data
     ports:
       - "4566:4566"
     volumes:
-      - localstack_data:/var/lib/localstack
+      - ./localstack_data:/tmp/localstack
 
   backend-api:
     build:
       context: ../backend/api
     container_name: cs_api
-    env_file: ../config/dev.env
+    env_file: ../.env
     depends_on:
       - postgres
       - localstack
     ports:
       - "8080:8080"
-    command: ["go", "run", "./cmd/server/main.go"]
+    command: ["sleep", "infinity"]
+    # temporary until actual server is implemented
 
   backend-worker:
     build:
       context: ../backend/worker
     container_name: cs_worker
-    env_file: ../config/dev.env
+    env_file: ../.env
     depends_on:
       - postgres
       - localstack
-    command: ["go", "run", "./cmd/worker/main.go"]
+    command: ["sleep", "infinity"]
 
   ai-service:
     build:
       context: ../backend/ai
     container_name: cs_ai
-    env_file: ../config/dev.env
+    env_file: ../.env
     ports:
       - "5001:5001"
     depends_on:
@@ -60,7 +64,7 @@ services:
     build:
       context: ../frontend
     container_name: cs_frontend
-    env_file: ../config/dev.env
+    env_file: ../.env
     ports:
       - "3000:3000"
     depends_on:
@@ -69,4 +73,3 @@ services:
 
 volumes:
   db-data:
-  localstack_data:
