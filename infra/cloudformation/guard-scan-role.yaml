@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'IAM Role for CloudCop Guard Security Scan'
+
+Parameters:
+  ExternalID:
+    Type: String
+    Description: External ID for role assumption
+
+Resources:
+  GuardSecurityScanRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: GuardSecurityScanRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: arn:aws:iam::123456789012:root  # Replace with platform account ID
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Ref ExternalID
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
+
+Outputs:
+  RoleArn:
+    Description: ARN of the GuardSecurityScanRole
+    Value: !GetAtt GuardSecurityScanRole.Arn
+    Export:
+      Name: GuardSecurityScanRoleArn

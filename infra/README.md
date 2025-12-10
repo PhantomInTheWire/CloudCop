@@ -20,3 +20,15 @@ docker compose up
 | frontend       | 3000 | Next.js                     |
 
 All services use environment variables from `.env` in repo root.
+
+## 🧱 Infrastructure Base
+
+This section contains templates for deploying CloudCop infrastructure in AWS.
+
+### CloudFormation
+
+See [cloudformation/README.md](cloudformation/README.md) for deploying IAM roles via CloudFormation.
+
+### Terraform
+
+See [terraform/README.md](terraform/README.md) for infrastructure as code using Terraform.
