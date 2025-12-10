@@ -36,8 +36,7 @@ services:
       - localstack
     ports:
       - "8080:8080"
-    command: ["sleep", "infinity"]
-    # temporary until actual server is implemented
+    command: ["go", "run", "./cmd/server/main.go"]
 
   backend-worker:
     build:
@@ -47,7 +46,7 @@ services:
     depends_on:
       - postgres
       - localstack
-    command: ["sleep", "infinity"]
+    command: ["go", "run", "./cmd/worker/main.go"]
 
   ai-service:
     build:
