@@ -9,6 +9,11 @@ Install dependencies:
 go mod tidy
 ```
 
+Lint and format:
+```bash
+golangci-lint run
+```
+
 Run locally:
 ```bash
 go run ./cmd/worker/main.go
