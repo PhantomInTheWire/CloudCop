@@ -30,7 +30,7 @@ services:
     build:
       context: ../backend/api
     container_name: cs_api
-    env_file: ../.env
+    env_file: ../config/dev.env
     depends_on:
       - postgres
       - localstack
@@ -42,7 +42,7 @@ services:
     build:
       context: ../backend/worker
     container_name: cs_worker
-    env_file: ../.env
+    env_file: ../config/dev.env
     depends_on:
       - postgres
       - localstack
@@ -52,7 +52,7 @@ services:
     build:
       context: ../backend/ai
     container_name: cs_ai
-    env_file: ../.env
+    env_file: ../config/dev.env
     ports:
       - "5001:5001"
     depends_on:
@@ -63,7 +63,7 @@ services:
     build:
       context: ../frontend
     container_name: cs_frontend
-    env_file: ../.env
+    env_file: ../config/dev.env
     ports:
       - "3000:3000"
     depends_on:
