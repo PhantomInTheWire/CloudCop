@@ -9,3 +9,15 @@ dependencies = [
     "fastapi>=0.120.4",
     "uvicorn>=0.38.0",
 ]
+
+[tool.ruff]
+line-length = 88
+fix = true
+select = ["E", "F", "I"]
+
+[tool.mypy]
+ignore_missing_imports = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
