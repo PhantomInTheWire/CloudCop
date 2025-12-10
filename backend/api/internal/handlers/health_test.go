@@ -2,6 +2,6 @@ package handlers
 
 import "testing"
 
-func TestHealth(_ *testing.T) {
+func TestHealth(t *testing.T) {
 	// placeholder
 }
