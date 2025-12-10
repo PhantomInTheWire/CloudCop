@@ -87,7 +87,7 @@ jobs:
           uv venv
           uv pip install fastapi uvicorn mypy ruff bandit pytest
           uv run ruff check app/
-          uv run mypy app/
+          uv run mypy --namespace-packages app/
 
       - name: Python tests
         run: |
