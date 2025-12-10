@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master, dev]
+
+jobs:
+  go-checks:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'backend/api/') || contains(github.event.head_commit.modified, 'backend/worker/') || contains(github.event.head_commit.modified, '.github/') || github.event_name == 'pull_request'
+    services:
+      postgres:
+        image: postgres:15
+        ports: ["5432:5432"]
+        env:
+          POSTGRES_USER: guard
+          POSTGRES_PASSWORD: guard
+          POSTGRES_DB: guard
+        options: >-
+          --health-cmd "pg_isready -U guard" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum', '**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache: true
+
+      - name: Go mod tidy check
+        run: |
+          cd backend/api && go mod tidy
+          cd ../worker && go mod tidy
+
+      - name: Go lint and format
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          cd backend/api && golangci-lint run
+          cd ../worker && golangci-lint run
+
+      - name: Go build check
+        run: |
+          cd backend/api && go build ./cmd/server
+          cd ../worker && go build ./cmd/worker
+
+      - name: Go tests
+        run: |
+          cd backend/api && go test ./...
+          cd ../worker && go test ./...
+
+      - name: Security scan (Go)
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          cd backend/api && gosec ./...
+          cd ../worker && gosec ./...
+
+  python-checks:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'backend/ai/') || contains(github.event.head_commit.modified, '.github/') || github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('backend/ai/pyproject.toml', 'backend/ai/uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Python lint + type check
+        run: |
+          cd backend/ai
+          uv venv
+          uv pip install fastapi uvicorn mypy ruff bandit pytest
+          uv run ruff check app/
+          export MYPYPATH=. && uv run mypy app/routers/health.py
+
+      - name: Python tests
+        run: |
+          cd backend/ai
+          PYTHONPATH=. uv run pytest tests/
+
+      - name: Security scan (Python)
+        run: |
+          cd backend/ai
+          uv run bandit -r app/
+
+  frontend-checks:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'frontend/') || contains(github.event.head_commit.modified, '.github/') || github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Frontend lint and format
+        run: |
+          cd frontend
+          npm ci
+          npm run lint
+          npm run format:check
+
+      - name: Frontend tests
+        run: |
+          cd frontend
+          npm run test
+
+      - name: Security scan (Frontend)
+        run: |
+          cd frontend
+          npm audit --omit=dev || true
+
+  docker-build:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'backend/') || contains(github.event.head_commit.modified, 'frontend/') || contains(github.event.head_commit.modified, 'infra/docker-compose.yml') || github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      
+      - name: Build Docker images
+        run: |
+          docker compose -f infra/docker-compose.yml build

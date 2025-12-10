@@ -1,0 +1,1 @@
+Deployment configurations and scripts for CloudCop services.

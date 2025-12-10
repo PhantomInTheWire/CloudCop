@@ -1,0 +1,1 @@
+Backend monorepo containing API, worker, and AI services for CloudCop.
