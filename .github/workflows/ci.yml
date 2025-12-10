@@ -7,7 +7,7 @@ on:
     branches: [master, dev]
 
 jobs:
-  lint-test-build:
+  go-checks:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -27,18 +27,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # ---------- Caching ----------
       - uses: actions/cache@v4
         with:
           path: ~/.cache/go-build
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('backend/ai/pyproject.toml') }}
-
-      # ---------- Go Checks ----------
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -71,7 +64,18 @@ jobs:
           cd backend/api && gosec ./...
           cd ../worker && gosec ./...
 
-      # ---------- Python Checks ----------
+  python-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('backend/ai/pyproject.toml') }}
+
       - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -95,7 +99,13 @@ jobs:
           cd backend/ai
           uv run bandit -r app/
 
-      # ---------- Frontend Checks ----------
+  frontend-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -118,7 +128,13 @@ jobs:
           cd frontend
           npm audit --omit=dev || true
 
-      # ---------- Docker Build Test ----------
+  docker-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
       - name: Build Docker images
         run: |
           docker compose -f infra/docker-compose.yml build --no-cache
