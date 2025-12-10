@@ -87,7 +87,7 @@ jobs:
           uv venv
           uv pip install fastapi uvicorn mypy ruff bandit pytest
           uv run ruff check app/
-          uv run mypy --explicit-package-bases . app/routers/health.py
+          export MYPYPATH=. && uv run mypy app/routers/health.py
 
       - name: Python tests
         run: |
