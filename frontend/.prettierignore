@@ -3,6 +3,3 @@ next.config.ts
 postcss.config.mjs
 package*.json
 tsconfig.json
-.eslintrc.json
-.prettierrc
-README.md
