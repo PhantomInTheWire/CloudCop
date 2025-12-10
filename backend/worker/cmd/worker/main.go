@@ -1,3 +1,4 @@
+// Package main is the entry point for the CloudCop worker service.
 package main
 
 import (

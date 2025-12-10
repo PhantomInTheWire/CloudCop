@@ -20,7 +20,6 @@ select = ["E", "F", "I"]
 [tool.mypy]
 ignore_missing_imports = true
 disallow_untyped_defs = true
-namespace_packages = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
