@@ -26,26 +26,10 @@ jobs:
       - name: Extract version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
       - name: Build and push versioned images
         run: |
-          docker compose -f infra/docker-compose.yml build \
-            --cache-from type=local,src=/tmp/.buildx-cache \
-            --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max \
-            --parallel
+          docker compose -f infra/docker-compose.yml build
           docker compose -f infra/docker-compose.yml push
-
-      - name: Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Tag images with version
         run: |
@@ -59,12 +43,12 @@ jobs:
           docker push ghcr.io/${{ github.repository }}/frontend:${{ env.VERSION }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ env.VERSION }}
+          release_name: Release ${{ github.ref }}
           body: |
             Version ${{ env.VERSION }} released.
             See CHANGELOG.md for details.
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
