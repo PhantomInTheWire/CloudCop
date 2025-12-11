@@ -20,7 +20,7 @@ resource "aws_iam_role" "guard_security_scan_role" {
       {
         Effect = "Allow"
         Principal = {
-          AWS = "arn:aws:iam::${var.platform_account_id}:root"
+          AWS = "arn:aws:iam::123456789012:root" # Replace with your platform account ID
         }
         Action = "sts:AssumeRole"
         Condition = {

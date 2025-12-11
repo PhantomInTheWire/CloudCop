@@ -25,9 +25,9 @@ All services use environment variables from `.env` in repo root.
 
 This section contains templates for deploying CloudCop infrastructure in AWS.
 
-### CloudFormation
+### CloudCop Template
 
-See [cloudformation/README.md](cloudformation/README.md) for deploying IAM roles via CloudFormation.
+See [cloudcop-template/README.md](cloudcop-template/README.md) for Terraform modules that handle user onboarding and provide reusable infrastructure components.
 
 ### Terraform
 
