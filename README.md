@@ -24,3 +24,11 @@ Services will be available at:
 - API: http://localhost:8080
 - AI: http://localhost:5001
 - Worker: Logs in Docker Compose output
+
+## Support
+
+For support, please open an issue in the standard GitHub issue tracker.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
