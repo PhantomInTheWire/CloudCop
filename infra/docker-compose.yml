@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15
@@ -19,12 +17,11 @@ services:
     container_name: cs_localstack
     environment:
       SERVICES: s3,ec2,iam,lambda,dynamodb,sts,cloudformation
-      DEFAULT_REGION: us-east-1
-      DATA_DIR: /tmp/localstack/data
+      PERSISTENCE: 1
     ports:
       - "4566:4566"
     volumes:
-      - ./localstack_data:/tmp/localstack
+      - localstack_data:/var/lib/localstack
 
   backend-api:
     build:
@@ -72,3 +69,4 @@ services:
 
 volumes:
   db-data:
+  localstack_data:
