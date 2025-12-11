@@ -9,7 +9,7 @@ on:
 jobs:
   go-checks:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'backend/api/') || contains(github.event.head_commit.modified, 'backend/worker/') || github.event_name == 'pull_request'
+    if: contains(github.event.head_commit.modified, 'backend/api/') || contains(github.event.head_commit.modified, 'backend/worker/') || contains(github.event.head_commit.modified, '.github/') || github.event_name == 'pull_request'
     services:
       postgres:
         image: postgres:15
@@ -73,7 +73,7 @@ jobs:
 
   python-checks:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'backend/ai/') || github.event_name == 'pull_request'
+    if: contains(github.event.head_commit.modified, 'backend/ai/') || contains(github.event.head_commit.modified, '.github/') || github.event_name == 'pull_request'
 
     steps:
       - name: Checkout repo
@@ -112,7 +112,7 @@ jobs:
 
   frontend-checks:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'frontend/') || github.event_name == 'pull_request'
+    if: contains(github.event.head_commit.modified, 'frontend/') || contains(github.event.head_commit.modified, '.github/') || github.event_name == 'pull_request'
 
     steps:
       - name: Checkout repo
@@ -149,7 +149,7 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
-       - name: Build Docker images
-         run: |
-           docker compose -f infra/docker-compose.yml build
+      
+      - name: Build Docker images
+        run: |
+          docker compose -f infra/docker-compose.yml build
