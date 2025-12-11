@@ -26,22 +26,3 @@ jobs:
         run: |
           docker compose -f infra/docker-compose.yml build
           docker compose -f infra/docker-compose.yml push
-
-      - name: Deploy to VPS via SSH
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /opt/cloudsentinel
-            git pull origin master
-            docker compose -f infra/docker-compose.yml pull
-            docker compose -f infra/docker-compose.yml up -d --remove-orphans
-            docker system prune -f
-
-      - name: Post-deploy health check
-        run: |
-          sleep 10
-          curl -f http://${{ secrets.VPS_HOST }}:8080/health
-          curl -f http://${{ secrets.VPS_HOST }}:5001/api/health
