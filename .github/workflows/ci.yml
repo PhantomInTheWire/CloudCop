@@ -92,7 +92,7 @@ jobs:
       - name: Python tests
         run: |
           cd backend/ai
-          uv run pytest tests/
+          PYTHONPATH=. uv run pytest tests/
 
       - name: Security scan (Python)
         run: |
