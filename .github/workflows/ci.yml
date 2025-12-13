@@ -72,11 +72,17 @@ jobs:
           cd backend/api && go mod tidy
           cd ../worker && go mod tidy
 
-      - name: Go lint and format
-        run: |
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v2
-          cd backend/api && golangci-lint run
-          cd ../worker && golangci-lint run
+      - name: Go lint (backend/api)
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.6
+          working-directory: backend/api
+
+      - name: Go lint (backend/worker)
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.6
+          working-directory: backend/worker
 
       - name: Go build check
         run: |
