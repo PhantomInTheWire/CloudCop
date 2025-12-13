@@ -116,7 +116,7 @@ if [ -d ".venv" ] && [ -f ".venv/bin/ruff" ]; then
 else
     UV_VENV_CLEAR=1 uv venv
     uv pip install ruff mypy bandit pytest
-    print_status "Python tools installed (ruff, mypy, bandit)"
+    print_status "Python tools installed (ruff, mypy, bandit, pytest)"
 fi
 cd ../..
 echo ""

@@ -18,11 +18,10 @@ func TestCredentialCache_SetGet(t *testing.T) {
 		Expiration:      time.Now().Add(1 * time.Hour),
 	}
 
-	// Set credentials manually
+	// Set credentials manually using composite key
 	cache.mu.Lock()
-	cache.credentials["123456789012"] = &cachedCredentials{
+	cache.credentials[cacheKey("123456789012", "test-external-id")] = &cachedCredentials{
 		creds:       creds,
-		externalID:  "test-external-id",
 		lastRefresh: time.Now(),
 	}
 	cache.mu.Unlock()
@@ -60,10 +59,10 @@ func TestCredentialCache_ThreadSafety(_ *testing.T) {
 			}
 
 			accountID := "123456789012"
+			externalID := "test-external-id"
 			cache.mu.Lock()
-			cache.credentials[accountID] = &cachedCredentials{
+			cache.credentials[cacheKey(accountID, externalID)] = &cachedCredentials{
 				creds:       creds,
-				externalID:  "test-external-id",
 				lastRefresh: time.Now(),
 			}
 			cache.mu.Unlock()
@@ -72,7 +71,7 @@ func TestCredentialCache_ThreadSafety(_ *testing.T) {
 				Try to get credentials to verify thread-safe access.
 				Errors are expected in tests since we can't actually call AWS.
 			*/
-			_, _ = cache.GetCredentials(context.Background(), accountID, "test-external-id")
+			_, _ = cache.GetCredentials(context.Background(), accountID, externalID)
 		}()
 	}
 
@@ -84,6 +83,7 @@ func TestCredentialCache_Invalidate(t *testing.T) {
 	cache := NewCredentialCache(auth)
 
 	accountID := "123456789012"
+	externalID := "test-external-id"
 	creds := &Credentials{
 		AccessKeyID:     "AKIATEST",
 		SecretAccessKey: "secret",
@@ -92,9 +92,8 @@ func TestCredentialCache_Invalidate(t *testing.T) {
 	}
 
 	cache.mu.Lock()
-	cache.credentials[accountID] = &cachedCredentials{
+	cache.credentials[cacheKey(accountID, externalID)] = &cachedCredentials{
 		creds:       creds,
-		externalID:  "test-external-id",
 		lastRefresh: time.Now(),
 	}
 	cache.mu.Unlock()
@@ -105,7 +104,7 @@ func TestCredentialCache_Invalidate(t *testing.T) {
 	}
 
 	// Invalidate
-	cache.InvalidateCredentials(accountID)
+	cache.InvalidateCredentials(accountID, externalID)
 
 	// Verify it's gone
 	if cache.GetCachedCredentialsCount() != 0 {

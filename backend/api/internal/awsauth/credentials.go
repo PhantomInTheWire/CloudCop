@@ -14,14 +14,19 @@ const (
 // CredentialCache manages cached AWS credentials with automatic refresh
 type CredentialCache struct {
 	mu          sync.RWMutex
-	credentials map[string]*cachedCredentials
+	credentials map[string]*cachedCredentials // key: "accountID:externalID"
 	auth        *AWSAuth
+	stopCh      chan struct{}
 }
 
 type cachedCredentials struct {
 	creds       *Credentials
-	externalID  string
 	lastRefresh time.Time
+}
+
+// cacheKey generates a composite key from accountID and externalID
+func cacheKey(accountID, externalID string) string {
+	return accountID + ":" + externalID
 }
 
 // NewCredentialCache creates a CredentialCache that stores per-account AWS
@@ -31,6 +36,7 @@ func NewCredentialCache(auth *AWSAuth) *CredentialCache {
 	cache := &CredentialCache{
 		credentials: make(map[string]*cachedCredentials),
 		auth:        auth,
+		stopCh:      make(chan struct{}),
 	}
 
 	// Start background refresh goroutine
@@ -39,13 +45,20 @@ func NewCredentialCache(auth *AWSAuth) *CredentialCache {
 	return cache
 }
 
+// Stop gracefully shuts down the credential cache
+func (c *CredentialCache) Stop() {
+	close(c.stopCh)
+}
+
 // GetCredentials retrieves credentials from cache or fetches new ones
 func (c *CredentialCache) GetCredentials(ctx context.Context, accountID, externalID string) (*Credentials, error) {
+	key := cacheKey(accountID, externalID)
+
 	c.mu.RLock()
-	cached, exists := c.credentials[accountID]
+	cached, exists := c.credentials[key]
 	c.mu.RUnlock()
 
-	if exists && cached.externalID == externalID {
+	if exists {
 		// Check if credentials are still valid
 		if time.Until(cached.creds.Expiration) > refreshBuffer {
 			return cached.creds, nil
@@ -66,10 +79,10 @@ func (c *CredentialCache) RefreshCredentials(ctx context.Context, accountID, ext
 		return nil, err
 	}
 
+	key := cacheKey(accountID, externalID)
 	c.mu.Lock()
-	c.credentials[accountID] = &cachedCredentials{
+	c.credentials[key] = &cachedCredentials{
 		creds:       creds,
-		externalID:  externalID,
 		lastRefresh: time.Now(),
 	}
 	c.mu.Unlock()
@@ -78,9 +91,10 @@ func (c *CredentialCache) RefreshCredentials(ctx context.Context, accountID, ext
 }
 
 // InvalidateCredentials removes credentials from cache
-func (c *CredentialCache) InvalidateCredentials(accountID string) {
+func (c *CredentialCache) InvalidateCredentials(accountID, externalID string) {
+	key := cacheKey(accountID, externalID)
 	c.mu.Lock()
-	delete(c.credentials, accountID)
+	delete(c.credentials, key)
 	c.mu.Unlock()
 }
 
@@ -89,28 +103,60 @@ func (c *CredentialCache) refreshLoop() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		c.refreshExpiring()
+	for {
+		select {
+		case <-ticker.C:
+			c.refreshExpiring()
+		case <-c.stopCh:
+			return
+		}
 	}
 }
 
 // refreshExpiring refreshes credentials that are about to expire
 func (c *CredentialCache) refreshExpiring() {
 	c.mu.RLock()
-	expiring := make(map[string]string) // accountID -> externalID
-	for accountID, cached := range c.credentials {
+	type expiringCred struct {
+		accountID  string
+		externalID string
+	}
+	var expiring []expiringCred
+	for key, cached := range c.credentials {
 		if time.Until(cached.creds.Expiration) <= refreshBuffer {
-			expiring[accountID] = cached.externalID
+			// Parse composite key back to accountID and externalID
+			// This is a simple split - in production you might want more robust parsing
+			parts := splitCacheKey(key)
+			if len(parts) == 2 {
+				expiring = append(expiring, expiringCred{
+					accountID:  parts[0],
+					externalID: parts[1],
+				})
+			}
 		}
 	}
 	c.mu.RUnlock()
 
 	// Refresh expiring credentials
-	for accountID, externalID := range expiring {
+	for _, cred := range expiring {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		_, _ = c.RefreshCredentials(ctx, accountID, externalID)
+		if _, err := c.RefreshCredentials(ctx, cred.accountID, cred.externalID); err != nil {
+			// TODO: Add proper logging when logger is available
+			// For now, silently continue to avoid crashes
+			_ = err
+		}
 		cancel()
 	}
+}
+
+// splitCacheKey splits a composite cache key into accountID and externalID
+func splitCacheKey(key string) []string {
+	// Find the first colon to split accountID and externalID
+	for i := 0; i < len(key); i++ {
+		if key[i] == ':' {
+			return []string{key[:i], key[i+1:]}
+		}
+	}
+	return []string{key}
 }
 
 // GetCachedCredentialsCount returns the number of cached credentials

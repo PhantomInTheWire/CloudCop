@@ -23,10 +23,12 @@ It handles both production mode (using STS AssumeRole) and self-hosted mode
 (using direct AWS credentials from environment variables).
 */
 type AWSAuth struct {
-	cfg         aws.Config
-	stsClient   *sts.Client
-	selfHosting bool
-	endpointURL string
+	cfg             aws.Config
+	stsClient       *sts.Client
+	selfHosting     bool
+	endpointURL     string
+	roleName        string
+	sessionDuration int32
 }
 
 // NewAWSAuth creates and returns a configured AWSAuth based on environment.
@@ -38,6 +40,33 @@ func NewAWSAuth() (*AWSAuth, error) {
 	ctx := context.Background()
 	selfHosting := os.Getenv("SELF_HOSTING") == "1"
 	endpointURL := os.Getenv("AWS_ENDPOINT_URL")
+
+	/*
+		Validate and set AWS region with default fallback.
+		This ensures the SDK always has a valid region configured.
+	*/
+	region := os.Getenv("AWS_REGION")
+	if region == "" {
+		region = "us-east-1" // Default region
+	}
+
+	/*
+		Configure role name and session duration with defaults.
+		These can be customized via environment variables for different deployments.
+	*/
+	roleName := os.Getenv("AWS_ROLE_NAME")
+	if roleName == "" {
+		roleName = "CloudCopSecurityScanRole"
+	}
+
+	sessionDuration := int32(21600) // Default: 6 hours
+	if durStr := os.Getenv("AWS_SESSION_DURATION_SECONDS"); durStr != "" {
+		var parsedDuration int32
+		if _, err := fmt.Sscanf(durStr, "%d", &parsedDuration); err == nil && parsedDuration > 0 {
+			sessionDuration = parsedDuration
+		}
+		// Invalid values fall back to default
+	}
 
 	var cfg aws.Config
 	var err error
@@ -55,7 +84,7 @@ func NewAWSAuth() (*AWSAuth, error) {
 		}
 
 		cfg, err = config.LoadDefaultConfig(ctx,
-			config.WithRegion(os.Getenv("AWS_REGION")),
+			config.WithRegion(region),
 			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
 				accessKey,
 				secretKey,
@@ -68,7 +97,7 @@ func NewAWSAuth() (*AWSAuth, error) {
 			The platform's IAM role will be used to assume customer roles.
 		*/
 		cfg, err = config.LoadDefaultConfig(ctx,
-			config.WithRegion(os.Getenv("AWS_REGION")),
+			config.WithRegion(region),
 		)
 	}
 
@@ -84,10 +113,12 @@ func NewAWSAuth() (*AWSAuth, error) {
 	}
 
 	return &AWSAuth{
-		cfg:         cfg,
-		stsClient:   sts.NewFromConfig(cfg),
-		selfHosting: selfHosting,
-		endpointURL: endpointURL,
+		cfg:             cfg,
+		stsClient:       sts.NewFromConfig(cfg),
+		selfHosting:     selfHosting,
+		endpointURL:     endpointURL,
+		roleName:        roleName,
+		sessionDuration: sessionDuration,
 	}, nil
 }
 
@@ -97,7 +128,7 @@ This is disabled in self-hosted mode where direct credentials are used instead.
 */
 func (a *AWSAuth) AssumeRole(ctx context.Context, input AssumeRoleInput) (*Credentials, error) {
 	if a.selfHosting {
-		return nil, errors.New("AssumeRole not available in self-hosted mode")
+		return nil, ErrSelfHostedMode
 	}
 
 	if input.AccountID == "" || input.ExternalID == "" {
@@ -106,16 +137,16 @@ func (a *AWSAuth) AssumeRole(ctx context.Context, input AssumeRoleInput) (*Crede
 
 	/*
 		Construct the IAM role ARN to assume.
-		The role name must match what's created by the CloudFormation template.
+		The role name is configurable via AWS_ROLE_NAME environment variable.
 	*/
-	roleARN := fmt.Sprintf("arn:aws:iam::%s:role/CloudCopSecurityScanRole", input.AccountID)
+	roleARN := fmt.Sprintf("arn:aws:iam::%s:role/%s", input.AccountID, a.roleName)
 	sessionName := fmt.Sprintf("CloudCopSession-%d", time.Now().Unix())
 
 	result, err := a.stsClient.AssumeRole(ctx, &sts.AssumeRoleInput{
 		RoleArn:         aws.String(roleARN),
 		RoleSessionName: aws.String(sessionName),
 		ExternalId:      aws.String(input.ExternalID),
-		DurationSeconds: aws.Int32(21600), // 6 hours
+		DurationSeconds: aws.Int32(a.sessionDuration),
 	})
 
 	if err != nil {

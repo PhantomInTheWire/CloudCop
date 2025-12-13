@@ -1,11 +1,12 @@
+version: "2"
 run:
   timeout: 3m
 linters:
   enable:
     - govet
-    - gofmt
     - revive
     - goconst
     - staticcheck
-issues:
-  exclude-use-default: false
+formatters:
+  enable:
+    - gofmt
