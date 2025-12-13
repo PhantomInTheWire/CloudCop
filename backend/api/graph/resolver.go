@@ -4,6 +4,7 @@ package graph
 import (
 	"cloudcop/api/internal/awsauth"
 	"cloudcop/api/internal/database"
+	"cloudcop/api/internal/graphdb"
 )
 
 // This file will not be regenerated automatically.
@@ -16,4 +17,5 @@ type Resolver struct {
 	DB    *database.Queries
 	Auth  *awsauth.AWSAuth
 	Cache *awsauth.CredentialCache
+	Neo4j *graphdb.Neo4jClient
 }
