@@ -4,7 +4,17 @@
     "private": true,
     "description": "AI-powered cloud security scanning platform",
     "scripts": {
-        "commitlint": "commitlint --edit"
+        "commitlint": "commitlint --edit",
+        "dev": "docker compose -f infra/docker-compose.yml up",
+        "dev:build": "docker compose -f infra/docker-compose.yml up --build",
+        "dev:down": "docker compose -f infra/docker-compose.yml down",
+        "dev:clean": "docker compose -f infra/docker-compose.yml down -v",
+        "logs": "docker compose -f infra/docker-compose.yml logs -f",
+        "logs:backend": "docker compose -f infra/docker-compose.yml logs -f backend",
+        "logs:kestra": "docker compose -f infra/docker-compose.yml logs -f kestra",
+        "db:migrate": "docker compose -f infra/docker-compose.yml exec postgres psql -U cloudcop -d cloudcop -f /docker-entrypoint-initdb.d/migrations.sql",
+        "db:shell": "docker compose -f infra/docker-compose.yml exec postgres psql -U cloudcop -d cloudcop",
+        "neo4j:shell": "docker compose -f infra/docker-compose.yml exec neo4j cypher-shell -u neo4j -p ${NEO4J_PASSWORD:-neo4j_dev}"
     },
     "devDependencies": {
         "@commitlint/cli": "^18.4.3",

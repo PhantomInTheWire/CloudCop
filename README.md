@@ -14,16 +14,63 @@ AI-powered cloud security tool that scans AWS environments for common misconfigu
 
 ## Quick Start
 
-```bash
-cd infra
-docker compose up
-```
+### Prerequisites
+
+- Docker 24+
+- Docker Compose v2+
+- 8GB RAM minimum
+
+### Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/PhantomInTheWire/CloudCop.git
+   cd CloudCop
+   ```
+
+2. Copy environment file:
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your OPENAI_API_KEY
+   ```
+
+3. Start all services:
+   ```bash
+   npm run dev
+   ```
 
 Services will be available at:
-- Frontend: http://localhost:3000
-- API: http://localhost:8080
-- AI: http://localhost:5001
-- Worker: Logs in Docker Compose output
+- **Frontend**: http://localhost:3000 - Next.js Dashboard
+- **Backend GraphQL**: http://localhost:8080/graphql - Go API
+- **Kestra**: http://localhost:8081 - AI Agent Orchestration
+- **Neo4j Browser**: http://localhost:7474 - Security Graph (user: neo4j, password: from .env)
+- **PostgreSQL**: localhost:5432 - Metadata & Results
+
+### Development Commands
+
+```bash
+# View logs
+npm run logs
+
+# View specific service logs
+npm run logs:backend
+npm run logs:kestra
+
+# Rebuild services
+npm run dev:build
+
+# Stop services
+npm run dev:down
+
+# Clean slate (removes volumes)
+npm run dev:clean
+
+# Database shell
+npm run db:shell
+
+# Neo4j Cypher shell
+npm run neo4j:shell
+```
 
 ## Developer Setup
 
