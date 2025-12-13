@@ -14,7 +14,8 @@ type AccountsHandler struct {
 	cache *awsauth.CredentialCache
 }
 
-// NewAccountsHandler creates a new accounts handler
+// NewAccountsHandler creates an AccountsHandler wired with the provided AWS authentication and credential cache.
+// The auth parameter supplies AWS authentication/verification functionality; cache is used for storing and invalidating temporary credentials.
 func NewAccountsHandler(auth *awsauth.AWSAuth, cache *awsauth.CredentialCache) *AccountsHandler {
 	return &AccountsHandler{
 		auth:  auth,

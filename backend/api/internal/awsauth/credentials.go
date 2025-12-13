@@ -24,7 +24,9 @@ type cachedCredentials struct {
 	lastRefresh time.Time
 }
 
-// NewCredentialCache creates a new credential cache
+// NewCredentialCache creates a CredentialCache that stores per-account AWS
+// credentials and starts a background goroutine that periodically refreshes
+// expiring credentials using the provided AWSAuth.
 func NewCredentialCache(auth *AWSAuth) *CredentialCache {
 	cache := &CredentialCache{
 		credentials: make(map[string]*cachedCredentials),
