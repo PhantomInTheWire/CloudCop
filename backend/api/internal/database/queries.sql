@@ -24,15 +24,15 @@ SELECT * FROM account_connections WHERE user_id = $1 ORDER BY created_at DESC;
 SELECT * FROM account_connections WHERE id = $1 AND user_id = $2 LIMIT 1;
 
 -- name: VerifyAccountConnection :one
-UPDATE account_connections 
-SET verified = true, last_verified_at = CURRENT_TIMESTAMP 
-WHERE user_id = $1 AND account_id = $2 
+UPDATE account_connections
+SET verified = true, last_verified_at = CURRENT_TIMESTAMP
+WHERE user_id = $1 AND account_id = $2
 RETURNING *;
 
 -- name: DeleteAccountConnection :exec
 DELETE FROM account_connections WHERE user_id = $1 AND id = $2;
 
 -- name: GetAccountConnectionByAccountID :one
-SELECT * FROM account_connections 
-WHERE user_id = $1 AND account_id = $2 
+SELECT * FROM account_connections
+WHERE user_id = $1 AND account_id = $2
 LIMIT 1;
