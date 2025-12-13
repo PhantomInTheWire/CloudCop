@@ -17,6 +17,8 @@ type DBTX interface {
 	QueryRow(context.Context, string, ...interface{}) pgx.Row
 }
 
+// New creates a Queries configured to use the provided DBTX implementation.
+// The returned *Queries uses db to execute statements and queries.
 func New(db DBTX) *Queries {
 	return &Queries{db: db}
 }
