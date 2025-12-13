@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   This template creates the CloudCopSecurityScanRole IAM role in your AWS account
   with the necessary read-only permissions for CloudCop to perform security scans.
@@ -9,6 +9,12 @@ Parameters:
     Description: |
       The External ID CloudCop will use to assume this role. DO NOT CHANGE THIS.
     Type: String
+  PlatformAccountId:
+    Description: |
+      The AWS account ID of the CloudCop platform that will assume this role.
+      Default is LocalStack's account ID for testing. For production, use your CloudCop platform account ID.
+    Type: String
+    Default: "000000000000"
 
 Resources:
   CloudCopSecurityScanRole:
@@ -16,134 +22,134 @@ Resources:
     Properties:
       RoleName: CloudCopSecurityScanRole
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
-              AWS: "arn:aws:iam::000000000000:root"  # LocalStack root account
-            Action: 'sts:AssumeRole'
+              AWS: !Sub "arn:aws:iam::${PlatformAccountId}:root"
+            Action: "sts:AssumeRole"
             Condition:
               StringEquals:
-                'sts:ExternalId': !Ref ExternalId
-      MaxSessionDuration: 21600  # 6 hours
+                "sts:ExternalId": !Ref ExternalId
+      MaxSessionDuration: 21600 # 6 hours
       Policies:
         - PolicyName: CloudCopPermissions
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
-                  - 'account:Get*'
+                  - "account:Get*"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'apigateway:GET'
+                  - "apigateway:GET"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'cloudtrail:GetInsightSelectors'
-                  - 'cloudtrail:GetTrailStatus'
-                  - 'cloudtrail:DescribeTrails'
-                  - 'cloudtrail:GetEventSelectors'
+                  - "cloudtrail:GetInsightSelectors"
+                  - "cloudtrail:GetTrailStatus"
+                  - "cloudtrail:DescribeTrails"
+                  - "cloudtrail:GetEventSelectors"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'dynamodb:ListTables'
-                  - 'dynamodb:DescribeTable'
-                  - 'dynamodb:DescribeContinuousBackups'
-                  - 'dynamodb:DescribeTimeToLive'
+                  - "dynamodb:ListTables"
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:DescribeContinuousBackups"
+                  - "dynamodb:DescribeTimeToLive"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'ec2:DescribeInstances'
-                  - 'ec2:DescribeVolumes'
-                  - 'ec2:DescribeSecurityGroups'
-                  - 'ec2:DescribeAddresses'
-                  - 'ec2:DescribeInstanceAttribute'
-                  - 'ec2:DescribeVolumesModifications'
-                  - 'ec2:DescribeInstanceStatus'
-                  - 'ec2:DescribeNetworkInterfaces'
-                  - 'ec2:DescribeVpcs'
-                  - 'ec2:DescribeSubnets'
+                  - "ec2:DescribeInstances"
+                  - "ec2:DescribeVolumes"
+                  - "ec2:DescribeSecurityGroups"
+                  - "ec2:DescribeAddresses"
+                  - "ec2:DescribeInstanceAttribute"
+                  - "ec2:DescribeVolumesModifications"
+                  - "ec2:DescribeInstanceStatus"
+                  - "ec2:DescribeNetworkInterfaces"
+                  - "ec2:DescribeVpcs"
+                  - "ec2:DescribeSubnets"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'ecr:Describe*'
-                  - 'ecr:GetRepositoryPolicy'
-                  - 'ecr:ListImages'
+                  - "ecr:Describe*"
+                  - "ecr:GetRepositoryPolicy"
+                  - "ecr:ListImages"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'ecs:ListClusters'
-                  - 'ecs:DescribeTaskDefinition'
-                  - 'ecs:ListTaskDefinitions'
-                  - 'ecs:DescribeTasks'
-                  - 'ecs:DescribeContainerInstances'
-                  - 'ecs:ListServices'
-                  - 'ecs:DescribeServices'
-                  - 'ecs:DescribeClusters'
+                  - "ecs:ListClusters"
+                  - "ecs:DescribeTaskDefinition"
+                  - "ecs:ListTaskDefinitions"
+                  - "ecs:DescribeTasks"
+                  - "ecs:DescribeContainerInstances"
+                  - "ecs:ListServices"
+                  - "ecs:DescribeServices"
+                  - "ecs:DescribeClusters"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'glue:GetConnections'
-                  - 'glue:GetSecurityConfiguration*'
+                  - "glue:GetConnections"
+                  - "glue:GetSecurityConfiguration*"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'iam:GetRole'
-                  - 'iam:List*'
-                  - 'iam:GetPolicy'
-                  - 'iam:GetPolicyVersion'
-                  - 'iam:GetAccountSummary'
-                  - 'iam:GetAccessKeyLastUsed'
-                  - 'iam:GetLoginProfile'
-                  - 'iam:GetAccountPasswordPolicy'
-                  - 'iam:GetUser'
-                  - 'iam:GenerateCredentialReport'
-                  - 'iam:GetCredentialReport'
+                  - "iam:GetRole"
+                  - "iam:List*"
+                  - "iam:GetPolicy"
+                  - "iam:GetPolicyVersion"
+                  - "iam:GetAccountSummary"
+                  - "iam:GetAccessKeyLastUsed"
+                  - "iam:GetLoginProfile"
+                  - "iam:GetAccountPasswordPolicy"
+                  - "iam:GetUser"
+                  - "iam:GenerateCredentialReport"
+                  - "iam:GetCredentialReport"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'lambda:ListFunctions'
-                  - 'lambda:GetFunction*'
-                  - 'lambda:GetPolicy'
-                  - 'lambda:GetLayerVersion'
-                  - 'lambda:ListTags'
+                  - "lambda:ListFunctions"
+                  - "lambda:GetFunction*"
+                  - "lambda:GetPolicy"
+                  - "lambda:GetLayerVersion"
+                  - "lambda:ListTags"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'logs:FilterLogEvents'
-                  - 'logs:DescribeLogGroups'
-                  - 'logs:DescribeLogStreams'
+                  - "logs:FilterLogEvents"
+                  - "logs:DescribeLogGroups"
+                  - "logs:DescribeLogStreams"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'macie2:GetMacieSession'
+                  - "macie2:GetMacieSession"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 's3:ListAllMyBuckets'
-                  - 's3:Get*'
+                  - "s3:ListAllMyBuckets"
+                  - "s3:Get*"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'securityhub:GetFindings'
-                  - 'securityhub:DescribeHub'
+                  - "securityhub:GetFindings"
+                  - "securityhub:DescribeHub"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'ssm:GetDocument'
-                  - 'ssm-incidents:List*'
+                  - "ssm:GetDocument"
+                  - "ssm-incidents:List*"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'tag:GetTagKeys'
-                  - 'tag:GetResources'
+                  - "tag:GetTagKeys"
+                  - "tag:GetResources"
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'rds:Describe*'
-                  - 'rds:ListTagsForResource'
+                  - "rds:Describe*"
+                  - "rds:ListTagsForResource"
                 Resource: "*"
       Tags:
         - Key: "Service"

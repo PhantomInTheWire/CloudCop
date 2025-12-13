@@ -93,11 +93,12 @@ echo "   Starting API server in background..."
 # The server will use the AWS_ENDPOINT_URL to connect to LocalStack
 # instead of real AWS services.
 #
-cd ../../backend/api
+pushd ../../backend/api > /dev/null
 AWS_REGION=us-west-2 \
 AWS_ENDPOINT_URL="${LOCALSTACK_ENDPOINT}" \
 go run ./cmd/server/main.go > /tmp/cloudcop-api.log 2>&1 &
 API_PID=$!
+popd > /dev/null
 
 echo "   Waiting for API to be ready..."
 sleep 3
