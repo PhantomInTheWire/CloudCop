@@ -74,7 +74,7 @@ jobs:
 
       - name: Go lint and format
         run: |
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v2
           cd backend/api && golangci-lint run
           cd ../worker && golangci-lint run
 
