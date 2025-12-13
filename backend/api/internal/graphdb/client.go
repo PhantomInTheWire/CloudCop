@@ -13,7 +13,10 @@ type Neo4jClient struct {
 	driver neo4j.DriverWithContext
 }
 
-// NewNeo4jClient creates a new Neo4j client using environment variables.
+// NewNeo4jClient creates a Neo4jClient by reading NEO4J_URI, NEO4J_USERNAME, and
+// NEO4J_PASSWORD from the environment and initializing a driver with that data.
+// The provided context is ignored. It returns a *Neo4jClient on success or an
+// error if driver creation fails.
 func NewNeo4jClient(_ context.Context) (*Neo4jClient, error) {
 	uri := os.Getenv("NEO4J_URI")
 	username := os.Getenv("NEO4J_USERNAME")

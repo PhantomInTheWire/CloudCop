@@ -23,6 +23,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// main initializes services (PostgreSQL, optional Neo4j, and AWS auth), registers HTTP and GraphQL routes,
+// starts the API server on :8080, and performs a graceful shutdown on SIGINT/SIGTERM by stopping the credential
+// cache and closing Neo4j and database connections.
+//
+// If Neo4j initialization fails, the server continues to start without Neo4j support.
 func main() {
 	// Initialize PostgreSQL
 	dbURL := os.Getenv("DATABASE_URL")
