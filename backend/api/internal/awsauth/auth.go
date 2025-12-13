@@ -1,3 +1,7 @@
+/*
+Package awsauth provides AWS authentication services using STS AssumeRole.
+It supports secure temporary credential management with ExternalID validation.
+*/
 package awsauth
 
 import (
