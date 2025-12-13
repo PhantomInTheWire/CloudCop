@@ -21,7 +21,8 @@ type AccountsHandler struct {
 	store *database.Queries
 }
 
-// NewAccountsHandler creates an AccountsHandler wired with the provided dependencies
+// NewAccountsHandler constructs an AccountsHandler wired with the provided AWS authentication helper,
+// credential cache, and database queries. It returns a handler ready to be registered with HTTP routes.
 func NewAccountsHandler(auth *awsauth.AWSAuth, cache *awsauth.CredentialCache, store *database.Queries) *AccountsHandler {
 	return &AccountsHandler{
 		auth:  auth,
