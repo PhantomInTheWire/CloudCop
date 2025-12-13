@@ -2,7 +2,13 @@
 package main
 
 import (
+	"context"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"cloudcop/api/internal/awsauth"
 	"cloudcop/api/internal/handlers"
@@ -10,37 +16,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// main initializes AWS authentication and a credential cache, registers HTTP handlers for health checks and account management under /api/accounts, and starts the Gin HTTP server on :8080.
 func main() {
-	/*
-		Initialize the AWS authentication service which handles STS AssumeRole operations.
-		This service manages connections to AWS accounts using temporary credentials
-		with ExternalID validation for security.
-	*/
 	auth, err := awsauth.NewAWSAuth()
 	if err != nil {
 		log.Fatalf("Failed to initialize AWS auth: %v", err)
 	}
 
-	/*
-		Create a credential cache to store and automatically refresh temporary AWS credentials.
-		The cache prevents unnecessary STS API calls and ensures credentials are refreshed
-		before they expire (5 minutes before expiration by default).
-	*/
 	cache := awsauth.NewCredentialCache(auth)
-
-	/*
-		Initialize the accounts handler which provides HTTP endpoints for managing
-		AWS account connections, including verify, connect, list, and disconnect operations.
-	*/
 	accountsHandler := handlers.NewAccountsHandler(auth, cache)
 
-	/*
-		Setup the Gin web framework router with health check and account management endpoints.
-		All account endpoints are grouped under /api/accounts for RESTful consistency.
-	*/
 	r := gin.Default()
-
 	r.GET("/health", handlers.Health)
 
 	api := r.Group("/api")
@@ -54,9 +39,38 @@ func main() {
 		}
 	}
 
-	// Start server
-	log.Println("Starting CloudCop API server on :8080")
-	if err := r.Run(":8080"); err != nil {
-		log.Fatal(err)
+	srv := &http.Server{
+		Addr:              ":8080",
+		Handler:           r,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
+
+	/*
+		Graceful shutdown: listen for SIGINT/SIGTERM, stop the credential cache
+		background goroutine, then shutdown the HTTP server with a timeout.
+	*/
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		log.Println("Starting CloudCop API server on :8080")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+
+	<-quit
+	log.Println("Shutting down server...")
+
+	cache.Stop()
+	log.Println("Credential cache stopped")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	log.Println("Server exited gracefully")
 }
