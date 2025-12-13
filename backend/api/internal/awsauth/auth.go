@@ -29,11 +29,11 @@ type AWSAuth struct {
 	endpointURL string
 }
 
-/*
-NewAWSAuth creates a new AWS authentication service.
-It automatically detects the mode (production vs self-hosted) based on
-the SELF_HOSTING environment variable and configures accordingly.
-*/
+// NewAWSAuth creates and returns a configured AWSAuth based on environment.
+// It detects self-hosting when SELF_HOSTING == "1", supports an AWS_ENDPOINT_URL override,
+// and in self-hosted mode requires AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY; otherwise it uses
+// the default AWS credential chain.
+// It returns the initialized *AWSAuth or an error if configuration fails or required environment variables are missing.
 func NewAWSAuth() (*AWSAuth, error) {
 	ctx := context.Background()
 	selfHosting := os.Getenv("SELF_HOSTING") == "1"

@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// main initializes AWS authentication and a credential cache, registers HTTP handlers for health checks and account management under /api/accounts, and starts the Gin HTTP server on :8080.
 func main() {
 	/*
 		Initialize the AWS authentication service which handles STS AssumeRole operations.
