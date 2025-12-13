@@ -100,7 +100,10 @@ go install github.com/securego/gosec/v2/cmd/gosec@latest
 print_status "Go tools installed (golangci-lint, gosec)"
 echo ""
 
+#
 # Install Python tools (via uv)
+# Skip installation if virtual environment already exists and has tools installed
+#
 echo "📦 Installing Python tools..."
 if ! command_exists uv; then
     print_warning "uv not found, installing..."
@@ -108,9 +111,13 @@ if ! command_exists uv; then
 fi
 
 cd backend/ai
-uv venv
-uv pip install ruff mypy bandit pytest
-print_status "Python tools installed (ruff, mypy, bandit)"
+if [ -d ".venv" ] && [ -f ".venv/bin/ruff" ]; then
+    print_status "Python tools already installed (skipping)"
+else
+    UV_VENV_CLEAR=1 uv venv
+    uv pip install ruff mypy bandit pytest
+    print_status "Python tools installed (ruff, mypy, bandit)"
+fi
 cd ../..
 echo ""
 
