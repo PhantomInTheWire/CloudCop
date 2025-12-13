@@ -55,3 +55,5 @@ logs/
 *.tmp
 *.temp
 backend/api/server
+
+backend/api/main

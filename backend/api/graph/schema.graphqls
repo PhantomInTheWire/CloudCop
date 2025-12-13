@@ -1,0 +1,70 @@
+scalar JSON
+
+type User {
+  id: ID!
+  email: String!
+  name: String
+  teams: [Team!]
+}
+
+type Team {
+  id: ID!
+  name: String!
+  slug: String!
+  members: [TeamMember!]
+  awsAccounts: [AWSAccount!]
+}
+
+type TeamMember {
+  user: User!
+  role: String!
+}
+
+type AWSAccount {
+  id: ID!
+  accountId: String!
+  externalId: String!
+  verified: Boolean!
+  roleArn: String
+  lastVerifiedAt: String
+  scans: [Scan!]
+}
+
+type Scan {
+  id: ID!
+  status: String!
+  services: [String!]
+  regions: [String!]
+  overallScore: Int
+  findings: [Finding!]
+  startedAt: String
+  completedAt: String
+  createdAt: String!
+}
+
+type Finding {
+  id: ID!
+  service: String!
+  region: String!
+  resourceId: String!
+  checkId: String!
+  severity: String!
+  title: String!
+  description: String!
+  compliance: [String!]
+}
+
+type Mutation {
+  # Auth & Onboarding
+  verifyAwsAccount(accountId: String!, externalId: String!): AWSAccount!
+  connectAccount(accountId: String!, externalId: String!, roleArn: String!): AWSAccount!
+
+  # Scans
+  startScan(accountId: ID!, services: [String!], regions: [String!]): Scan!
+}
+
+type Query {
+  me: User!
+  team(slug: String!): Team
+  myAccounts: [AWSAccount!]!
+}
