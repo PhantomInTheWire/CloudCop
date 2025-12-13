@@ -6,6 +6,7 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+        exclude: '^infra/cloudformation/.*\.yaml$' # CloudFormation uses intrinsic functions (!Ref, !GetAtt)
       - id: check-merge-conflict
       - id: mixed-line-ending
       - id: check-added-large-files
