@@ -10,25 +10,51 @@ import (
 	"syscall"
 	"time"
 
+	"cloudcop/api/graph"
 	"cloudcop/api/internal/awsauth"
+	"cloudcop/api/internal/database"
+	"cloudcop/api/internal/graphdb"
 	"cloudcop/api/internal/handlers"
+	"cloudcop/api/internal/middleware/auth"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
-	auth, err := awsauth.NewAWSAuth()
+	// Initialize PostgreSQL
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://postgres:postgres@localhost:5432/cloudcop?sslmode=disable"
+	}
+	connPool, err := pgxpool.New(context.Background(), dbURL)
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v", err)
+	}
+	store := database.New(connPool)
+
+	// Initialize Neo4j
+	neo4jClient, err := graphdb.NewNeo4jClient(context.Background())
+	if err != nil {
+		log.Printf("Warning: Failed to initialize Neo4j client: %v", err)
+		// Proceeding without Neo4j for now to allow server start if Neo4j is down
+	}
+
+	awsAuth, err := awsauth.NewAWSAuth()
 	if err != nil {
 		log.Fatalf("Failed to initialize AWS auth: %v", err)
 	}
 
-	cache := awsauth.NewCredentialCache(auth)
-	accountsHandler := handlers.NewAccountsHandler(auth, cache)
+	cache := awsauth.NewCredentialCache(awsAuth)
+	accountsHandler := handlers.NewAccountsHandler(awsAuth, cache, store)
 
 	r := gin.Default()
 	r.GET("/health", handlers.Health)
 
 	api := r.Group("/api")
+	api.Use(auth.Middleware()) // Apply auth middleware to API routes including GraphQL
 	{
 		accounts := api.Group("/accounts")
 		{
@@ -37,6 +63,23 @@ func main() {
 			accounts.GET("", accountsHandler.ListAccountsHandler)
 			accounts.DELETE("/:id", accountsHandler.DisconnectAccountHandler)
 		}
+
+		// GraphQL Endpoint
+		srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
+			DB:    store,
+			Auth:  awsAuth,
+			Cache: cache,
+			Neo4j: neo4jClient,
+		}}))
+
+		api.POST("/query", func(c *gin.Context) {
+			srv.ServeHTTP(c.Writer, c.Request)
+		})
+
+		// GraphQL Playground
+		api.GET("/playground", func(c *gin.Context) {
+			playground.Handler("GraphQL", "/api/query").ServeHTTP(c.Writer, c.Request)
+		})
 	}
 
 	srv := &http.Server{
@@ -63,7 +106,11 @@ func main() {
 	log.Println("Shutting down server...")
 
 	cache.Stop()
-	log.Println("Credential cache stopped")
+	if err := neo4jClient.Close(context.Background()); err != nil {
+		log.Printf("Error closing Neo4j client: %v", err)
+	}
+	connPool.Close()
+	log.Println("Credential cache, Neo4j, and DB connections stopped")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
