@@ -3,7 +3,6 @@ package graphdb
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
@@ -15,25 +14,14 @@ type Neo4jClient struct {
 }
 
 // NewNeo4jClient creates a new Neo4j client using environment variables.
-func NewNeo4jClient(ctx context.Context) (*Neo4jClient, error) {
+func NewNeo4jClient(_ context.Context) (*Neo4jClient, error) {
 	uri := os.Getenv("NEO4J_URI")
 	username := os.Getenv("NEO4J_USERNAME")
 	password := os.Getenv("NEO4J_PASSWORD")
 
-	if uri == "" {
-		uri = "bolt://localhost:7687"
-	}
-
-	driver, err := neo4j.NewDriverWithContext(
-		uri,
-		neo4j.BasicAuth(username, password, ""),
-	)
+	driver, err := neo4j.NewDriverWithContext(uri, neo4j.BasicAuth(username, password, ""))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create neo4j driver: %w", err)
-	}
-
-	if err := driver.VerifyConnectivity(ctx); err != nil {
-		return nil, fmt.Errorf("failed to connect to neo4j: %w", err)
+		return nil, err
 	}
 
 	return &Neo4jClient{driver: driver}, nil
