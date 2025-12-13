@@ -1,0 +1,130 @@
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+
+  # Go checks
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.55.2
+    hooks:
+      - id: golangci-lint
+        name: golangci-lint (backend/api)
+        entry: bash -c 'cd backend/api && golangci-lint run'
+        language: system
+        files: ^backend/api/.*\.go$
+        pass_filenames: false
+      - id: golangci-lint
+        name: golangci-lint (backend/worker)
+        entry: bash -c 'cd backend/worker && golangci-lint run'
+        language: system
+        files: ^backend/worker/.*\.go$
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      # Go mod tidy
+      - id: go-mod-tidy-api
+        name: go mod tidy (backend/api)
+        entry: bash -c 'cd backend/api && go mod tidy'
+        language: system
+        files: ^backend/api/(go\.mod|go\.sum|.*\.go)$
+        pass_filenames: false
+
+      - id: go-mod-tidy-worker
+        name: go mod tidy (backend/worker)
+        entry: bash -c 'cd backend/worker && go mod tidy'
+        language: system
+        files: ^backend/worker/(go\.mod|go\.sum|.*\.go)$
+        pass_filenames: false
+
+      # Go build check
+      - id: go-build-api
+        name: go build (backend/api)
+        entry: bash -c 'cd backend/api && go build ./cmd/server'
+        language: system
+        files: ^backend/api/.*\.go$
+        pass_filenames: false
+
+      - id: go-build-worker
+        name: go build (backend/worker)
+        entry: bash -c 'cd backend/worker && go build ./cmd/worker'
+        language: system
+        files: ^backend/worker/.*\.go$
+        pass_filenames: false
+
+      # Go security scan
+      - id: gosec-api
+        name: gosec (backend/api)
+        entry: bash -c 'cd backend/api && gosec ./...'
+        language: system
+        files: ^backend/api/.*\.go$
+        pass_filenames: false
+
+      - id: gosec-worker
+        name: gosec (backend/worker)
+        entry: bash -c 'cd backend/worker && gosec ./...'
+        language: system
+        files: ^backend/worker/.*\.go$
+        pass_filenames: false
+
+      # Python checks
+      - id: ruff-check
+        name: ruff check (backend/ai)
+        entry: bash -c 'cd backend/ai && uv run ruff check app/'
+        language: system
+        files: ^backend/ai/app/.*\.py$
+        pass_filenames: false
+
+      - id: mypy-check
+        name: mypy (backend/ai)
+        entry: bash -c 'cd backend/ai && export MYPYPATH=. && uv run mypy app/'
+        language: system
+        files: ^backend/ai/app/.*\.py$
+        pass_filenames: false
+
+      - id: bandit-check
+        name: bandit (backend/ai)
+        entry: bash -c 'cd backend/ai && uv run bandit -r app/'
+        language: system
+        files: ^backend/ai/app/.*\.py$
+        pass_filenames: false
+
+      # Frontend checks
+      - id: eslint-check
+        name: eslint (frontend)
+        entry: bash -c 'cd frontend && npm run lint'
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+
+      - id: prettier-check
+        name: prettier check (frontend)
+        entry: bash -c 'cd frontend && npm run format:check'
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx|json|css|md)$
+        pass_filenames: false
+
+      # Docker compose build check (only on docker-compose.yml changes)
+      - id: docker-compose-check
+        name: docker compose config check
+        entry: bash -c 'docker compose -f infra/docker-compose.yml config --quiet'
+        language: system
+        files: ^infra/docker-compose\.yml$
+        pass_filenames: false
+
+      # Commitlint
+      - id: commitlint
+        name: commitlint
+        entry: bash -c 'npx --yes @commitlint/cli --edit $1'
+        language: system
+        stages: [commit-msg]
+        always_run: true
+        pass_filenames: false
