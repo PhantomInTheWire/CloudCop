@@ -60,7 +60,7 @@ type ScanFinding struct {
 	Status      string
 	Severity    string
 	Title       string
-	Description string
+	Description pgtype.Text
 	Compliance  []string
 	CreatedAt   pgtype.Timestamp
 }
@@ -69,7 +69,7 @@ type Team struct {
 	ID        int32
 	Name      string
 	Slug      string
-	OwnerID   pgtype.Text
+	OwnerID   string
 	CreatedAt pgtype.Timestamp
 }
 

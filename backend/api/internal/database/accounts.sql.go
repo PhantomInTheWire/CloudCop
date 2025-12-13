@@ -77,7 +77,7 @@ RETURNING id, name, slug, owner_id, created_at
 type CreateTeamParams struct {
 	Name    string
 	Slug    string
-	OwnerID pgtype.Text
+	OwnerID string
 }
 
 func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, error) {
@@ -195,7 +195,7 @@ SELECT id, name, slug, owner_id, created_at FROM teams
 WHERE owner_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetTeamByOwnerID(ctx context.Context, ownerID pgtype.Text) (Team, error) {
+func (q *Queries) GetTeamByOwnerID(ctx context.Context, ownerID string) (Team, error) {
 	row := q.db.QueryRow(ctx, getTeamByOwnerID, ownerID)
 	var i Team
 	err := row.Scan(
