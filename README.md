@@ -114,67 +114,6 @@ pre-commit install
 pre-commit install --hook-type commit-msg
 ```
 
-### Commit Message Format
-
-This project enforces [Conventional Commits](https://www.conventionalcommits.org/) format:
-
-```
-type(scope): description
-
-Examples:
-  feat(backend): add new security scanner
-  fix(frontend): resolve dashboard display issue
-  chore(ci): update pre-commit hooks
-  docs(readme): improve setup instructions
-```
-
-**Valid types:** `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `perf`, `test`, `ci`, `build`, `revert`
-
-**Valid scopes:** `backend`, `frontend`, `infra`, `api`, `worker`, `ai`, `scanner`, `graph`, `ci`, `deps`
-
-### Running Pre-commit Hooks
-
-Hooks run automatically on commit:
-```bash
-git commit -m "feat(api): add new endpoint"
-```
-
-Run hooks manually on all files:
-```bash
-pre-commit run --all-files
-```
-
-Skip hooks (not recommended):
-```bash
-git commit --no-verify
-```
-
-### What's Being Checked
-
-Pre-commit hooks mirror all CI checks:
-
-**Go (backend/api, backend/worker):**
-- `golangci-lint` - Linting and formatting
-- `go mod tidy` - Dependency management
-- `go build` - Build verification
-- `gosec` - Security scanning
-
-**Python (backend/ai):**
-- `ruff` - Linting and formatting
-- `mypy` - Type checking
-- `bandit` - Security scanning
-
-**Frontend:**
-- `eslint` - Code linting
-- `prettier` - Code formatting
-- `npm audit` - Security audit (on CI only)
-
-**General:**
-- YAML validation
-- Trailing whitespace removal
-- End-of-file fixing
-- Large file detection
-
 ## Support
 
 
