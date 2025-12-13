@@ -121,7 +121,8 @@ func FromContext(ctx context.Context) *clerk.User {
 	return raw
 }
 
-// addresses an error is returned.
+// EmailFromContext retrieves the email address from the authenticated user in the context.
+// If no user is attached to the context or the user has no email addresses an error is returned.
 func EmailFromContext(ctx context.Context) (string, error) {
 	user := FromContext(ctx)
 	if user == nil {

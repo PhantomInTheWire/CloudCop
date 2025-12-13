@@ -111,8 +111,12 @@ func main() {
 	log.Println("Shutting down server...")
 
 	cache.Stop()
-	if err := neo4jClient.Close(context.Background()); err != nil {
-		log.Printf("Error closing Neo4j client: %v", err)
+	if neo4jClient != nil {
+		if err := neo4jClient.Close(context.Background()); err != nil {
+			log.Printf("Error closing Neo4j client: %v", err)
+		}
+	} else {
+		log.Println("Neo4j client was not initialized, skipping close")
 	}
 	connPool.Close()
 	log.Println("Credential cache, Neo4j, and DB connections stopped")
