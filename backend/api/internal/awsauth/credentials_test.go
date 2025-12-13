@@ -40,7 +40,7 @@ func TestCredentialCache_SetGet(t *testing.T) {
 	}
 }
 
-func TestCredentialCache_ThreadSafety(t *testing.T) {
+func TestCredentialCache_ThreadSafety(_ *testing.T) {
 	auth, _ := NewAWSAuth()
 	cache := NewCredentialCache(auth)
 
@@ -49,7 +49,7 @@ func TestCredentialCache_ThreadSafety(t *testing.T) {
 
 	for i := 0; i < numGoroutines; i++ {
 		wg.Add(1)
-		go func(id int) {
+		go func() {
 			defer wg.Done()
 
 			creds := &Credentials{
@@ -68,9 +68,12 @@ func TestCredentialCache_ThreadSafety(t *testing.T) {
 			}
 			cache.mu.Unlock()
 
-			// Try to get credentials
+			/*
+				Try to get credentials to verify thread-safe access.
+				Errors are expected in tests since we can't actually call AWS.
+			*/
 			_, _ = cache.GetCredentials(context.Background(), accountID, "test-external-id")
-		}(i)
+		}()
 	}
 
 	wg.Wait()

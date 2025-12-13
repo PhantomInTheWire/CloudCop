@@ -28,9 +28,9 @@ type AssumeRoleInput struct {
 
 // Common error types
 var (
-	ErrInvalidExternalID   = errors.New("invalid external ID")
-	ErrAssumeRoleFailed    = errors.New("failed to assume role")
-	ErrCredentialsExpired  = errors.New("credentials have expired")
-	ErrSelfHostedMode      = errors.New("operation not supported in self-hosted mode")
-	ErrInvalidCredentials  = errors.New("invalid AWS credentials")
+	ErrInvalidExternalID  = errors.New("invalid external ID")
+	ErrAssumeRoleFailed   = errors.New("failed to assume role")
+	ErrCredentialsExpired = errors.New("credentials have expired")
+	ErrSelfHostedMode     = errors.New("operation not supported in self-hosted mode")
+	ErrInvalidCredentials = errors.New("invalid AWS credentials")
 )
