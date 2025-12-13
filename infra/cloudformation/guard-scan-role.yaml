@@ -1,32 +1,163 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'IAM Role for CloudCop Guard Security Scan'
+Description: |
+  This template creates the CloudCopSecurityScanRole IAM role in your AWS account
+  with the necessary read-only permissions for CloudCop to perform security scans.
+  The role allows CloudCop to assume the role using AWS Security Token Service (STS).
 
 Parameters:
-  ExternalID:
+  ExternalId:
+    Description: |
+      The External ID CloudCop will use to assume this role. DO NOT CHANGE THIS.
     Type: String
-    Description: External ID for role assumption
 
 Resources:
-  GuardSecurityScanRole:
+  CloudCopSecurityScanRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: GuardSecurityScanRole
+      RoleName: CloudCopSecurityScanRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
-              AWS: arn:aws:iam::123456789012:root  # Replace with platform account ID
-            Action: sts:AssumeRole
+              AWS: "arn:aws:iam::000000000000:root"  # LocalStack root account
+            Action: 'sts:AssumeRole'
             Condition:
               StringEquals:
-                sts:ExternalId: !Ref ExternalID
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/ReadOnlyAccess
+                'sts:ExternalId': !Ref ExternalId
+      MaxSessionDuration: 21600  # 6 hours
+      Policies:
+        - PolicyName: CloudCopPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'account:Get*'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'apigateway:GET'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'cloudtrail:GetInsightSelectors'
+                  - 'cloudtrail:GetTrailStatus'
+                  - 'cloudtrail:DescribeTrails'
+                  - 'cloudtrail:GetEventSelectors'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:ListTables'
+                  - 'dynamodb:DescribeTable'
+                  - 'dynamodb:DescribeContinuousBackups'
+                  - 'dynamodb:DescribeTimeToLive'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'ec2:DescribeInstances'
+                  - 'ec2:DescribeVolumes'
+                  - 'ec2:DescribeSecurityGroups'
+                  - 'ec2:DescribeAddresses'
+                  - 'ec2:DescribeInstanceAttribute'
+                  - 'ec2:DescribeVolumesModifications'
+                  - 'ec2:DescribeInstanceStatus'
+                  - 'ec2:DescribeNetworkInterfaces'
+                  - 'ec2:DescribeVpcs'
+                  - 'ec2:DescribeSubnets'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'ecr:Describe*'
+                  - 'ecr:GetRepositoryPolicy'
+                  - 'ecr:ListImages'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'ecs:ListClusters'
+                  - 'ecs:DescribeTaskDefinition'
+                  - 'ecs:ListTaskDefinitions'
+                  - 'ecs:DescribeTasks'
+                  - 'ecs:DescribeContainerInstances'
+                  - 'ecs:ListServices'
+                  - 'ecs:DescribeServices'
+                  - 'ecs:DescribeClusters'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'glue:GetConnections'
+                  - 'glue:GetSecurityConfiguration*'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'iam:GetRole'
+                  - 'iam:List*'
+                  - 'iam:GetPolicy'
+                  - 'iam:GetPolicyVersion'
+                  - 'iam:GetAccountSummary'
+                  - 'iam:GetAccessKeyLastUsed'
+                  - 'iam:GetLoginProfile'
+                  - 'iam:GetAccountPasswordPolicy'
+                  - 'iam:GetUser'
+                  - 'iam:GenerateCredentialReport'
+                  - 'iam:GetCredentialReport'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'lambda:ListFunctions'
+                  - 'lambda:GetFunction*'
+                  - 'lambda:GetPolicy'
+                  - 'lambda:GetLayerVersion'
+                  - 'lambda:ListTags'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'logs:FilterLogEvents'
+                  - 'logs:DescribeLogGroups'
+                  - 'logs:DescribeLogStreams'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'macie2:GetMacieSession'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 's3:ListAllMyBuckets'
+                  - 's3:Get*'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'securityhub:GetFindings'
+                  - 'securityhub:DescribeHub'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'ssm:GetDocument'
+                  - 'ssm-incidents:List*'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'tag:GetTagKeys'
+                  - 'tag:GetResources'
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'rds:Describe*'
+                  - 'rds:ListTagsForResource'
+                Resource: "*"
+      Tags:
+        - Key: "Service"
+          Value: "https://cloudcop.dev"
+        - Key: "Support"
+          Value: "support@cloudcop.dev"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "CloudCopSecurityScanRole"
 
 Outputs:
   RoleArn:
-    Description: ARN of the GuardSecurityScanRole
-    Value: !GetAtt GuardSecurityScanRole.Arn
+    Description: ARN of the CloudCopSecurityScanRole
+    Value: !GetAtt CloudCopSecurityScanRole.Arn
     Export:
-      Name: GuardSecurityScanRoleArn
+      Name: CloudCopSecurityScanRoleArn
