@@ -20,7 +20,8 @@ type Scanner struct {
 	accountID string
 }
 
-// NewScanner creates a new DynamoDB scanner.
+// NewScanner constructs a DynamoDB scanner configured for the given AWS region and account.
+// It initializes an AWS DynamoDB client from cfg and returns the scanner as a scanner.ServiceScanner.
 func NewScanner(cfg aws.Config, region, accountID string) scanner.ServiceScanner {
 	return &Scanner{
 		client:    dynamodb.NewFromConfig(cfg),

@@ -21,7 +21,8 @@ type Scanner struct {
 	accountID string
 }
 
-// NewScanner creates a new S3 scanner.
+// NewScanner creates a new S3 scanner using the provided AWS configuration, region, and account ID.
+// The returned Scanner implements scanner.ServiceScanner and uses an S3 client constructed from cfg.
 func NewScanner(cfg aws.Config, region, accountID string) scanner.ServiceScanner {
 	return &Scanner{
 		client:    s3.NewFromConfig(cfg),
