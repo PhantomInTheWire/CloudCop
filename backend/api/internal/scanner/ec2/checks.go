@@ -104,7 +104,7 @@ func (e *Scanner) checkSecurityGroups(ctx context.Context, instance types.Instan
 					if aws.ToString(ipRange.CidrIp) == ipv4Any {
 						port := aws.ToInt32(perm.FromPort)
 						findings = append(findings, e.createFinding(
-							"ec2_sg_unrestricted_ingress",
+							"ec2_instance_sg_unrestricted",
 							sgID,
 							"Security group allows unrestricted ingress",
 							fmt.Sprintf("SG %s on instance %s allows 0.0.0.0/0 on port %d", sgID, instanceID, port),
@@ -265,16 +265,37 @@ func (e *Scanner) checkDangerousPorts(ctx context.Context) []scanner.Finding {
 		for _, perm := range sg.IpPermissions {
 			for _, ipRange := range perm.IpRanges {
 				if aws.ToString(ipRange.CidrIp) == ipv4Any {
-					port := aws.ToInt32(perm.FromPort)
-					if serviceName, dangerous := dangerousPorts[port]; dangerous {
-						findings = append(findings, e.createFinding(
-							"ec2_sg_dangerous_ports",
-							sgID,
-							fmt.Sprintf("Security group exposes %s port to internet", serviceName),
-							fmt.Sprintf("SG %s allows 0.0.0.0/0 access to %s (port %d)", sgID, serviceName, port),
-							scanner.StatusFail,
-							scanner.SeverityCritical,
-						))
+					fromPort := aws.ToInt32(perm.FromPort)
+					toPort := aws.ToInt32(perm.ToPort)
+
+					// Handle special cases: -1 means all ports, or if ToPort is 0/nil
+					if fromPort == -1 || (fromPort == 0 && toPort == 0) {
+						// Rule allows all ports, check all dangerous ports
+						for port, serviceName := range dangerousPorts {
+							findings = append(findings, e.createFinding(
+								"ec2_sg_dangerous_ports",
+								sgID,
+								fmt.Sprintf("Security group exposes %s port to internet", serviceName),
+								fmt.Sprintf("SG %s allows 0.0.0.0/0 access to %s (port %d) via all-ports rule", sgID, serviceName, port),
+								scanner.StatusFail,
+								scanner.SeverityCritical,
+							))
+						}
+						continue
+					}
+
+					// Check if any dangerous port falls within the range
+					for port, serviceName := range dangerousPorts {
+						if port >= fromPort && port <= toPort {
+							findings = append(findings, e.createFinding(
+								"ec2_sg_dangerous_ports",
+								sgID,
+								fmt.Sprintf("Security group exposes %s port to internet", serviceName),
+								fmt.Sprintf("SG %s allows 0.0.0.0/0 access to %s (port %d) in range %d-%d", sgID, serviceName, port, fromPort, toPort),
+								scanner.StatusFail,
+								scanner.SeverityCritical,
+							))
+						}
 					}
 				}
 			}
