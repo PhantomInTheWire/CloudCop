@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -48,7 +50,7 @@ type ScanTaskResult struct {
 
 // StartScan executes security scans across the specified regions and services.
 func (c *Coordinator) StartScan(ctx context.Context, config ScanConfig) (*ScanResult, error) {
-	startedAt := time.Now()
+	startedAt := time.Now().UTC()
 
 	// Build list of scan tasks
 	var tasks []ScanTask
@@ -103,7 +105,7 @@ func (c *Coordinator) StartScan(ctx context.Context, config ScanConfig) (*ScanRe
 		Services:     config.Services,
 		Findings:     allFindings,
 		StartedAt:    startedAt,
-		CompletedAt:  time.Now(),
+		CompletedAt:  time.Now().UTC(),
 		TotalChecks:  len(allFindings),
 		PassedChecks: passedChecks,
 		FailedChecks: failedChecks,
@@ -236,8 +238,11 @@ var (
 func GetAllRegions(ctx context.Context, cfg aws.Config) []string {
 	cachedRegionsMu.RLock()
 	if len(cachedRegions) > 0 {
-		defer cachedRegionsMu.RUnlock()
-		return cachedRegions
+		// Return a copy to prevent mutation
+		result := make([]string, len(cachedRegions))
+		copy(result, cachedRegions)
+		cachedRegionsMu.RUnlock()
+		return result
 	}
 	cachedRegionsMu.RUnlock()
 
@@ -248,7 +253,9 @@ func GetAllRegions(ctx context.Context, cfg aws.Config) []string {
 	}
 
 	cachedRegionsMu.Lock()
-	cachedRegions = regions
+	// Store a copy to prevent mutation
+	cachedRegions = make([]string, len(regions))
+	copy(cachedRegions, regions)
 	cachedRegionsMu.Unlock()
 
 	return regions
@@ -267,14 +274,25 @@ func fetchRegionsFromEC2(ctx context.Context, cfg aws.Config) ([]string, error) 
 
 	regions := make([]string, 0, len(output.Regions))
 	for _, region := range output.Regions {
-		if region.RegionName != nil {
-			regions = append(regions, *region.RegionName)
+		if region.RegionName == nil {
+			continue
 		}
+		// Skip regions that are not opted-in
+		if region.OptInStatus != nil {
+			status := strings.ToLower(*region.OptInStatus)
+			if status == "not-opted-in" {
+				continue
+			}
+		}
+		regions = append(regions, *region.RegionName)
 	}
 
 	if len(regions) == 0 {
-		return nil, fmt.Errorf("DescribeRegions returned no regions")
+		return nil, fmt.Errorf("DescribeRegions returned no usable regions")
 	}
+
+	// Sort for deterministic ordering
+	sort.Strings(regions)
 
 	return regions, nil
 }
