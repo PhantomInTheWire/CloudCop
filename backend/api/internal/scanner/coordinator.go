@@ -19,7 +19,7 @@ type Coordinator struct {
 	scanners  map[string]func(aws.Config, string, string) ServiceScanner
 }
 
-// The returned Coordinator has an initialized scanner factory registry ready for scanners to be registered.
+// NewCoordinator creates a new scan coordinator with an initialized scanner factory registry.
 func NewCoordinator(cfg aws.Config, accountID string) *Coordinator {
 	return &Coordinator{
 		cfg:       cfg,
