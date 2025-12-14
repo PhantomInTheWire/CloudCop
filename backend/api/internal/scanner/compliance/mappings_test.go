@@ -6,10 +6,10 @@ import (
 
 func TestGetCompliance(t *testing.T) {
 	tests := []struct {
-		name     string
-		checkID  string
-		want     []string
-		wantLen  int
+		name    string
+		checkID string
+		want    []string
+		wantLen int
 	}{
 		{
 			name:    "S3 bucket public access check",
@@ -133,7 +133,7 @@ func TestCheckMappings_Coverage(t *testing.T) {
 func TestCheckMappings_Frameworks(t *testing.T) {
 	// Verify that mappings contain valid framework references
 	validPrefixes := []string{"CIS-", "SOC2-", "NIST-", "PCI-DSS-", "GDPR-"}
-	
+
 	for checkID, mappings := range CheckMappings {
 		for _, mapping := range mappings {
 			hasValidPrefix := false

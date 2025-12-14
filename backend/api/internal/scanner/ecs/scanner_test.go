@@ -9,22 +9,24 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
+const testServiceName = "ecs"
+
 func TestNewScanner(t *testing.T) {
 	cfg := aws.Config{Region: "us-east-1"}
 	region := "us-east-1"
 	accountID := "123456789012"
-	
+
 	s := NewScanner(cfg, region, accountID)
-	
+
 	if s == nil {
 		t.Fatal("NewScanner returned nil")
 	}
-	
+
 	scanner, ok := s.(*Scanner)
 	if !ok {
 		t.Fatal("NewScanner did not return *Scanner type")
 	}
-	
+
 	if scanner.region != region {
 		t.Errorf("region = %v, want %v", scanner.region, region)
 	}
@@ -38,9 +40,9 @@ func TestNewScanner(t *testing.T) {
 
 func TestScanner_Service(t *testing.T) {
 	s := &Scanner{}
-	
-	if got := s.Service(); got != "ecs" {
-		t.Errorf("Service() = %v, want ecs", got)
+
+	if got := s.Service(); got != testServiceName {
+		t.Errorf("Service() = %v, want %s", got, testServiceName)
 	}
 }
 
@@ -49,7 +51,7 @@ func TestScanner_createFinding(t *testing.T) {
 		region:    "us-east-1",
 		accountID: "123456789012",
 	}
-	
+
 	tests := []struct {
 		name        string
 		checkID     string
@@ -87,15 +89,15 @@ func TestScanner_createFinding(t *testing.T) {
 			severity:    scanner.SeverityMedium,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			before := time.Now()
 			finding := s.createFinding(tt.checkID, tt.resourceID, tt.title, tt.description, tt.status, tt.severity)
 			after := time.Now()
-			
-			if finding.Service != "ecs" {
-				t.Errorf("Service = %v, want ecs", finding.Service)
+
+			if finding.Service != testServiceName {
+				t.Errorf("Service = %v, want %s", finding.Service, testServiceName)
 			}
 			if finding.Region != s.region {
 				t.Errorf("Region = %v, want %v", finding.Region, s.region)
@@ -124,11 +126,11 @@ func TestSensitiveEnvPatterns(t *testing.T) {
 	expectedPatterns := []string{
 		"SECRET", "PASSWORD", "KEY", "TOKEN", "CREDENTIAL", "API_KEY", "PRIVATE", "AUTH",
 	}
-	
+
 	if len(sensitiveEnvPatterns) != len(expectedPatterns) {
 		t.Errorf("sensitiveEnvPatterns has %d items, want %d", len(sensitiveEnvPatterns), len(expectedPatterns))
 	}
-	
+
 	for _, expected := range expectedPatterns {
 		found := false
 		for _, pattern := range sensitiveEnvPatterns {

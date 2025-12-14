@@ -15,18 +15,15 @@ import (
 
 // Scanner performs security checks on DynamoDB tables.
 type Scanner struct {
-	client    *dynamodb.Client
-	region    string
-	accountID string
+	client *dynamodb.Client
+	region string
 }
 
-// NewScanner constructs a DynamoDB scanner configured for the given AWS region and account.
-// It initializes an AWS DynamoDB client from cfg and returns the scanner as a scanner.ServiceScanner.
-func NewScanner(cfg aws.Config, region, accountID string) scanner.ServiceScanner {
+// NewScanner creates a new DynamoDB scanner for the given region.
+func NewScanner(cfg aws.Config, region, _ string) scanner.ServiceScanner {
 	return &Scanner{
-		client:    dynamodb.NewFromConfig(cfg),
-		region:    region,
-		accountID: accountID,
+		client: dynamodb.NewFromConfig(cfg),
+		region: region,
 	}
 }
 
@@ -79,6 +76,6 @@ func (d *Scanner) createFinding(checkID, resourceID, title, description string, 
 		Title:       title,
 		Description: description,
 		Compliance:  compliance.GetCompliance(checkID),
-		Timestamp:   time.Now(),
+		Timestamp:   time.Now().UTC(),
 	}
 }
