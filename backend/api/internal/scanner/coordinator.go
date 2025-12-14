@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
 )
 
 // Coordinator orchestrates parallel scanning across regions and services.
@@ -188,9 +189,10 @@ func GetDefaultRegions() []string {
 	}
 }
 
-// GetAllRegions returns a slice of all supported AWS region identifiers.
-func GetAllRegions() []string {
-	return []string{
+var (
+	cachedRegions   []string
+	cachedRegionsMu sync.RWMutex
+	fallbackRegions = []string{
 		"us-east-1", "us-east-2", "us-west-1", "us-west-2",
 		"af-south-1",
 		"ap-east-1", "ap-south-1", "ap-south-2", "ap-southeast-1", "ap-southeast-2",
@@ -201,4 +203,53 @@ func GetAllRegions() []string {
 		"me-south-1", "me-central-1",
 		"sa-east-1",
 	}
+)
+
+// GetAllRegions returns all AWS regions dynamically via EC2 DescribeRegions API.
+// Results are cached after the first successful call. Falls back to a hardcoded
+// list if the API call fails.
+func GetAllRegions(ctx context.Context, cfg aws.Config) []string {
+	cachedRegionsMu.RLock()
+	if len(cachedRegions) > 0 {
+		defer cachedRegionsMu.RUnlock()
+		return cachedRegions
+	}
+	cachedRegionsMu.RUnlock()
+
+	regions, err := fetchRegionsFromEC2(ctx, cfg)
+	if err != nil {
+		log.Printf("Failed to fetch regions from EC2 API, using fallback: %v", err)
+		return fallbackRegions
+	}
+
+	cachedRegionsMu.Lock()
+	cachedRegions = regions
+	cachedRegionsMu.Unlock()
+
+	return regions
+}
+
+// fetchRegionsFromEC2 calls EC2 DescribeRegions API to get all available regions.
+func fetchRegionsFromEC2(ctx context.Context, cfg aws.Config) ([]string, error) {
+	client := ec2.NewFromConfig(cfg)
+
+	output, err := client.DescribeRegions(ctx, &ec2.DescribeRegionsInput{
+		AllRegions: aws.Bool(true),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("DescribeRegions failed: %w", err)
+	}
+
+	regions := make([]string, 0, len(output.Regions))
+	for _, region := range output.Regions {
+		if region.RegionName != nil {
+			regions = append(regions, *region.RegionName)
+		}
+	}
+
+	if len(regions) == 0 {
+		return nil, fmt.Errorf("DescribeRegions returned no regions")
+	}
+
+	return regions, nil
 }
