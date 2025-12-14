@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"cloudcop/api/internal/scanner"
@@ -373,20 +374,5 @@ func hasCrossAccountPrincipal(principal interface{}, accountID string) bool {
 // It returns true only when both arn and accountID are non-empty and either
 // arn equals accountID or arn contains accountID according to the contains helper.
 func containsAccountID(arn, accountID string) bool {
-	return len(accountID) > 0 && len(arn) > 0 && (arn == accountID || contains(arn, accountID))
-}
-
-// contains reports whether substr appears in s either as an exact match, as a prefix, as a suffix, or somewhere strictly inside s.
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || containsMiddle(s, substr)))
-}
-
-// containsMiddle reports whether substr appears inside s at an index greater than 0 and strictly less than len(s)-len(substr).
-func containsMiddle(s, substr string) bool {
-	for i := 1; i < len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
+	return len(accountID) > 0 && len(arn) > 0 && (arn == accountID || strings.Contains(arn, accountID))
 }
