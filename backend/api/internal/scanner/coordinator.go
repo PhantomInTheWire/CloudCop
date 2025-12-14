@@ -110,46 +110,71 @@ func (c *Coordinator) StartScan(ctx context.Context, config ScanConfig) (*ScanRe
 	}, nil
 }
 
-// executeParallel runs scan tasks concurrently using goroutines.
+// executeParallel runs scan tasks concurrently using a bounded worker pool.
 func (c *Coordinator) executeParallel(ctx context.Context, tasks []ScanTask) []ScanTaskResult {
+	const maxWorkers = 10 // Limit concurrent scans to prevent overwhelming APIs
+
 	var wg sync.WaitGroup
 	resultsChan := make(chan ScanTaskResult, len(tasks))
+	tasksChan := make(chan ScanTask, len(tasks))
 
-	for _, task := range tasks {
+	// Start worker pool
+	for i := 0; i < maxWorkers; i++ {
 		wg.Add(1)
-		go func(t ScanTask) {
+		go func() {
 			defer wg.Done()
 
-			result := ScanTaskResult{Task: t}
+			for task := range tasksChan {
+				// Check for context cancellation before processing
+				select {
+				case <-ctx.Done():
+					resultsChan <- ScanTaskResult{
+						Task:  task,
+						Error: ctx.Err(),
+					}
+					continue
+				default:
+				}
 
-			// Create scanner for this service/region
-			factory, exists := c.scanners[t.Service]
-			if !exists {
-				result.Error = fmt.Errorf("no scanner registered for service %s", t.Service)
+				result := ScanTaskResult{Task: task}
+
+				// Create scanner for this service/region
+				factory, exists := c.scanners[task.Service]
+				if !exists {
+					result.Error = fmt.Errorf("no scanner registered for service %s", task.Service)
+					resultsChan <- result
+					continue
+				}
+
+				// Create regional config
+				regionalCfg := c.cfg.Copy()
+				regionalCfg.Region = task.Region
+
+				scanner := factory(regionalCfg, task.Region, c.accountID)
+
+				// Execute scan with context
+				findings, err := scanner.Scan(ctx, task.Region)
+				if err != nil {
+					result.Error = err
+					resultsChan <- result
+					continue
+				}
+
+				result.Findings = findings
 				resultsChan <- result
-				return
 			}
-
-			// Create regional config
-			regionalCfg := c.cfg.Copy()
-			regionalCfg.Region = t.Region
-
-			scanner := factory(regionalCfg, t.Region, c.accountID)
-
-			// Execute scan
-			findings, err := scanner.Scan(ctx, t.Region)
-			if err != nil {
-				result.Error = err
-				resultsChan <- result
-				return
-			}
-
-			result.Findings = findings
-			resultsChan <- result
-		}(task)
+		}()
 	}
 
-	// Wait for all tasks to complete
+	// Send tasks to workers
+	go func() {
+		for _, task := range tasks {
+			tasksChan <- task
+		}
+		close(tasksChan)
+	}()
+
+	// Wait for all workers to complete
 	go func() {
 		wg.Wait()
 		close(resultsChan)
