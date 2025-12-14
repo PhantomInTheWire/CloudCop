@@ -18,6 +18,8 @@ var sensitiveEnvVarPatterns = []string{
 	"PRIVATE", "AUTH", "PASS", "PWD", "ACCESS",
 }
 
+const maxRecommendedTimeoutSeconds = 300 // 5 minutes
+
 func (l *Scanner) checkEnvSecrets(_ context.Context, fn types.FunctionConfiguration) []scanner.Finding {
 	fnName := aws.ToString(fn.FunctionName)
 	if fn.Environment == nil || fn.Environment.Variables == nil {
@@ -140,12 +142,12 @@ func (l *Scanner) checkTracing(_ context.Context, fn types.FunctionConfiguration
 func (l *Scanner) checkTimeout(_ context.Context, fn types.FunctionConfiguration) []scanner.Finding {
 	fnName := aws.ToString(fn.FunctionName)
 	timeout := aws.ToInt32(fn.Timeout)
-	if timeout > 900 { // 15 minutes
+	if timeout > maxRecommendedTimeoutSeconds {
 		return []scanner.Finding{l.createFinding(
 			"lambda_timeout",
 			fnName,
-			"Lambda function timeout exceeds 15 minutes",
-			fmt.Sprintf("Function %s has timeout of %d seconds", fnName, timeout),
+			"Lambda function timeout exceeds recommended limit",
+			fmt.Sprintf("Function %s has timeout of %d seconds (recommended: ≤%d)", fnName, timeout, maxRecommendedTimeoutSeconds),
 			scanner.StatusFail,
 			scanner.SeverityLow,
 		)}
@@ -153,7 +155,7 @@ func (l *Scanner) checkTimeout(_ context.Context, fn types.FunctionConfiguration
 	return []scanner.Finding{l.createFinding(
 		"lambda_timeout",
 		fnName,
-		"Lambda function timeout is within limits",
+		"Lambda function timeout is within recommended limits",
 		fmt.Sprintf("Function %s has timeout of %d seconds", fnName, timeout),
 		scanner.StatusPass,
 		scanner.SeverityLow,
@@ -166,7 +168,15 @@ func (l *Scanner) checkReservedConcurrency(ctx context.Context, fn types.Functio
 		FunctionName: fn.FunctionName,
 	})
 	if err != nil {
-		return nil
+		// Return error finding instead of nil
+		return []scanner.Finding{l.createFinding(
+			"lambda_reserved_concurrency",
+			fnName,
+			"Could not determine reserved concurrency",
+			fmt.Sprintf("Function %s: API error: %v", fnName, err),
+			scanner.StatusFail,
+			scanner.SeverityLow,
+		)}
 	}
 
 	if concurrency.ReservedConcurrentExecutions != nil {
