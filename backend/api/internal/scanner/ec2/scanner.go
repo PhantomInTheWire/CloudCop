@@ -45,10 +45,39 @@ func (e *Scanner) Scan(ctx context.Context, _ string) ([]scanner.Finding, error)
 		return nil, fmt.Errorf("listing instances: %w", err)
 	}
 
+	// Collect all volume IDs for batch fetching
+	volumeIDs := make([]string, 0)
+	for _, instance := range instances {
+		for _, bdm := range instance.BlockDeviceMappings {
+			if bdm.Ebs != nil && bdm.Ebs.VolumeId != nil {
+				volumeIDs = append(volumeIDs, *bdm.Ebs.VolumeId)
+			}
+		}
+	}
+
+	// Batch fetch all volumes
+	volumeMap := make(map[string]*types.Volume)
+	if len(volumeIDs) > 0 {
+		volumes, err := e.client.DescribeVolumes(ctx, &ec2.DescribeVolumesInput{
+			VolumeIds: volumeIDs,
+		})
+		if err != nil {
+			// Log error but continue - individual checks will report missing volumes
+			fmt.Printf("Warning: failed to batch fetch volumes: %v\n", err)
+		} else {
+			for i := range volumes.Volumes {
+				vol := &volumes.Volumes[i]
+				if vol.VolumeId != nil {
+					volumeMap[*vol.VolumeId] = vol
+				}
+			}
+		}
+	}
+
 	for _, instance := range instances {
 		instanceID := aws.ToString(instance.InstanceId)
 		findings = append(findings, e.checkPublicIP(ctx, instance)...)
-		findings = append(findings, e.checkEBSEncryption(ctx, instance)...)
+		findings = append(findings, e.checkEBSEncryption(instance, volumeMap)...)
 		findings = append(findings, e.checkSecurityGroups(ctx, instance)...)
 		findings = append(findings, e.checkIMDSv2(ctx, instance)...)
 		findings = append(findings, e.checkIAMRole(ctx, instance)...)
