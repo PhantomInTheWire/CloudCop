@@ -109,7 +109,6 @@ func (e *Scanner) Scan(ctx context.Context, _ string) ([]scanner.Finding, error)
 		findings = append(findings, e.checkSecurityGroups(instance, sgMap)...)
 		findings = append(findings, e.checkIMDSv2(ctx, instance)...)
 		findings = append(findings, e.checkIAMRole(ctx, instance)...)
-		findings = append(findings, e.checkCloudWatchMonitoring(ctx, instance)...)
 		findings = append(findings, e.checkDetailedMonitoring(ctx, instance)...)
 		_ = instanceID
 	}
