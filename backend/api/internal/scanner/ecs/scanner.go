@@ -21,7 +21,8 @@ type Scanner struct {
 	accountID string
 }
 
-// NewScanner creates a new ECS scanner.
+// NewScanner creates and returns a Scanner that implements scanner.ServiceScanner for ECS security scanning.
+// cfg is the AWS SDK configuration used to initialize the ECS client; region and accountID are stored as scanner metadata.
 func NewScanner(cfg aws.Config, region, accountID string) scanner.ServiceScanner {
 	return &Scanner{
 		client:    ecs.NewFromConfig(cfg),

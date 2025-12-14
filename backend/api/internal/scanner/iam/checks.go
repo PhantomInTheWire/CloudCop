@@ -328,6 +328,8 @@ func (i *Scanner) checkConsoleWithoutMFA(ctx context.Context, user types.User) [
 	return nil
 }
 
+// isWildcard reports whether v represents a wildcard ("*").
+// It returns true if v is the string "*" or a slice containing the string "*" as any element; otherwise it returns false.
 func isWildcard(v interface{}) bool {
 	switch val := v.(type) {
 	case string:
@@ -342,6 +344,10 @@ func isWildcard(v interface{}) bool {
 	return false
 }
 
+// hasCrossAccountPrincipal reports whether the given principal represents cross-account access
+// relative to the provided account ID.
+// It returns true if the principal is a wildcard (`"*"`) or contains an `AWS` principal value
+// that does not include the provided account ID, false otherwise.
 func hasCrossAccountPrincipal(principal interface{}, accountID string) bool {
 	switch p := principal.(type) {
 	case string:
@@ -363,14 +369,19 @@ func hasCrossAccountPrincipal(principal interface{}, accountID string) bool {
 	return false
 }
 
+// containsAccountID reports whether arn contains the provided accountID.
+// It returns true only when both arn and accountID are non-empty and either
+// arn equals accountID or arn contains accountID according to the contains helper.
 func containsAccountID(arn, accountID string) bool {
 	return len(accountID) > 0 && len(arn) > 0 && (arn == accountID || contains(arn, accountID))
 }
 
+// contains reports whether substr appears in s either as an exact match, as a prefix, as a suffix, or somewhere strictly inside s.
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || containsMiddle(s, substr)))
 }
 
+// containsMiddle reports whether substr appears inside s at an index greater than 0 and strictly less than len(s)-len(substr).
 func containsMiddle(s, substr string) bool {
 	for i := 1; i < len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {

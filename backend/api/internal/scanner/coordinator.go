@@ -18,7 +18,7 @@ type Coordinator struct {
 	scanners  map[string]func(aws.Config, string, string) ServiceScanner
 }
 
-// NewCoordinator creates a new scan coordinator.
+// The returned Coordinator has an initialized scanner factory registry ready for scanners to be registered.
 func NewCoordinator(cfg aws.Config, accountID string) *Coordinator {
 	return &Coordinator{
 		cfg:       cfg,
@@ -188,7 +188,7 @@ func GetDefaultRegions() []string {
 	}
 }
 
-// GetAllRegions returns all AWS regions.
+// GetAllRegions returns a slice of all supported AWS region identifiers.
 func GetAllRegions() []string {
 	return []string{
 		"us-east-1", "us-east-2", "us-west-1", "us-west-2",

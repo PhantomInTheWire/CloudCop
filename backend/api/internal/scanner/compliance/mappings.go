@@ -91,7 +91,8 @@ var CheckMappings = map[string][]string{
 	"dynamodb_vpc_endpoint": {"SOC2-CC6.1", "NIST-AC-4"},
 }
 
-// GetCompliance returns the compliance mappings for a check.
+// GetCompliance returns the compliance framework codes associated with the given check ID.
+// If the check ID is not present in the mappings, it returns an empty slice.
 func GetCompliance(checkID string) []string {
 	if mappings, exists := CheckMappings[checkID]; exists {
 		return mappings
