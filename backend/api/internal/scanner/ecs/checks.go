@@ -54,18 +54,45 @@ func (e *Scanner) checkPublicRegistry(_ context.Context, taskDef *types.TaskDefi
 	publicRegistries := []string{"docker.io", "gcr.io", "ghcr.io", "quay.io", "registry.hub.docker.com"}
 	for _, container := range taskDef.ContainerDefinitions {
 		image := aws.ToString(container.Image)
-		for _, registry := range publicRegistries {
-			if strings.Contains(image, registry) || !strings.Contains(image, ".") {
-				findings = append(findings, e.createFinding(
-					"ecs_public_registry",
-					taskDefArn,
-					"ECS container uses public registry",
-					fmt.Sprintf("Container image %s is from a public registry", image),
-					scanner.StatusFail,
-					scanner.SeverityMedium,
-				))
+
+		// Parse image to extract registry host
+		// Format: [registry-host/]repo[:tag]
+		parts := strings.SplitN(image, "/", 2)
+		var registryHost string
+
+		if len(parts) == 1 {
+			// No slash - assume Docker Hub (e.g., "nginx:1.21")
+			registryHost = "docker.io"
+		} else {
+			// Check if first part looks like a registry host
+			// Registry hosts contain ".", ":", or are "localhost"
+			firstPart := parts[0]
+			if strings.Contains(firstPart, ".") || strings.Contains(firstPart, ":") || firstPart == "localhost" {
+				registryHost = firstPart
+			} else {
+				// First part is namespace, not registry (e.g., "library/nginx")
+				registryHost = "docker.io"
+			}
+		}
+
+		// Check if registry is public
+		isPublic := false
+		for _, pubReg := range publicRegistries {
+			if registryHost == pubReg || strings.HasSuffix(registryHost, "."+pubReg) {
+				isPublic = true
 				break
 			}
+		}
+
+		if isPublic {
+			findings = append(findings, e.createFinding(
+				"ecs_public_registry",
+				taskDefArn,
+				"ECS container uses public registry",
+				fmt.Sprintf("Container image %s is from public registry %s", image, registryHost),
+				scanner.StatusFail,
+				scanner.SeverityMedium,
+			))
 		}
 	}
 	return findings
