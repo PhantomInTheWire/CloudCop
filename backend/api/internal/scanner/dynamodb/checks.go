@@ -20,6 +20,17 @@ func (d *Scanner) checkEncryption(ctx context.Context, tableName string) []scann
 		return nil
 	}
 
+	if table == nil || table.Table == nil {
+		return []scanner.Finding{d.createFinding(
+			"dynamodb_encryption",
+			tableName,
+			"Unable to determine DynamoDB table encryption status",
+			fmt.Sprintf("DescribeTable returned no data for table %s", tableName),
+			scanner.StatusFail,
+			scanner.SeverityHigh,
+		)}
+	}
+
 	if table.Table.SSEDescription != nil && table.Table.SSEDescription.Status == types.SSEStatusEnabled {
 		return []scanner.Finding{d.createFinding(
 			"dynamodb_encryption",
@@ -106,6 +117,17 @@ func (d *Scanner) checkAutoScaling(ctx context.Context, tableName string) []scan
 		return nil
 	}
 
+	if table == nil || table.Table == nil {
+		return []scanner.Finding{d.createFinding(
+			"dynamodb_auto_scaling",
+			tableName,
+			"Unable to determine DynamoDB table scaling status",
+			fmt.Sprintf("DescribeTable returned no data for table %s", tableName),
+			scanner.StatusFail,
+			scanner.SeverityLow,
+		)}
+	}
+
 	if table.Table.BillingModeSummary != nil && table.Table.BillingModeSummary.BillingMode == types.BillingModePayPerRequest {
 		return []scanner.Finding{d.createFinding(
 			"dynamodb_auto_scaling",
@@ -117,8 +139,6 @@ func (d *Scanner) checkAutoScaling(ctx context.Context, tableName string) []scan
 		)}
 	}
 
-	// For provisioned capacity, we'd need to check Application Auto Scaling
-	// For simplicity, we flag provisioned tables as needing review
 	return []scanner.Finding{d.createFinding(
 		"dynamodb_auto_scaling",
 		tableName,
