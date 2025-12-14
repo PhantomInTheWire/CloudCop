@@ -21,7 +21,7 @@ type Scanner struct {
 	accountID string
 }
 
-// NewScanner creates a new IAM scanner.
+// given region and account ID for use in findings metadata.
 func NewScanner(cfg aws.Config, region, accountID string) scanner.ServiceScanner {
 	return &Scanner{
 		client:    iam.NewFromConfig(cfg),

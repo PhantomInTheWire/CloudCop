@@ -21,7 +21,8 @@ type Scanner struct {
 	accountID string
 }
 
-// NewScanner creates a new EC2 scanner.
+// NewScanner creates a new EC2 Scanner configured with the provided AWS config, region, and account ID.
+// The returned Scanner uses an EC2 client constructed from cfg and is initialized with region and accountID.
 func NewScanner(cfg aws.Config, region, accountID string) scanner.ServiceScanner {
 	return &Scanner{
 		client:    ec2.NewFromConfig(cfg),

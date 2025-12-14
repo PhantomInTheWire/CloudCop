@@ -21,7 +21,8 @@ type Scanner struct {
 	accountID string
 }
 
-// NewScanner creates a new Lambda scanner.
+// NewScanner creates a new Lambda scanner configured for the given AWS configuration, region, and account ID.
+// The returned scanner.ServiceScanner uses an AWS Lambda client initialized from cfg and is associated with the specified region and account.
 func NewScanner(cfg aws.Config, region, accountID string) scanner.ServiceScanner {
 	return &Scanner{
 		client:    lambda.NewFromConfig(cfg),
