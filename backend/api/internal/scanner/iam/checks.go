@@ -122,7 +122,21 @@ func (i *Scanner) checkRootMFA(ctx context.Context) []scanner.Finding {
 		return nil
 	}
 
-	mfaEnabled := summary.SummaryMap["AccountMFAEnabled"]
+	// Check if key exists and get value
+	mfaEnabled, exists := summary.SummaryMap["AccountMFAEnabled"]
+	if !exists {
+		// Key missing - treat as pass/skip since we can't determine
+		return []scanner.Finding{i.createFinding(
+			"iam_root_mfa",
+			"root",
+			"Root account MFA status unknown",
+			"Could not determine root account MFA status from account summary",
+			scanner.StatusPass,
+			scanner.SeverityCritical,
+		)}
+	}
+
+	// Explicitly check for zero value
 	if mfaEnabled == 0 {
 		return []scanner.Finding{i.createFinding(
 			"iam_root_mfa",

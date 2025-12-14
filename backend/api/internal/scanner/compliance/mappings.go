@@ -17,8 +17,8 @@ const (
 	PCIDSS Framework = "PCI-DSS"
 )
 
-// CheckMappings maps check IDs to their compliance framework requirements.
-var CheckMappings = map[string][]string{
+// checkMappings maps check IDs to their compliance framework requirements.
+var checkMappings = map[string][]string{
 	// S3 Checks
 	"s3_bucket_public_access": {"CIS-2.1.5", "SOC2-CC6.1", "NIST-AC-3", "PCI-DSS-1.3"},
 	"s3_bucket_policy_public": {"CIS-2.1.5", "SOC2-CC6.1", "NIST-AC-3", "PCI-DSS-1.3"},
@@ -91,11 +91,15 @@ var CheckMappings = map[string][]string{
 	"dynamodb_vpc_endpoint": {"SOC2-CC6.1", "NIST-AC-4"},
 }
 
-// GetCompliance returns the compliance framework codes associated with the given check ID.
+// GetCompliance returns a copy of the compliance framework codes associated with the given check ID.
 // If the check ID is not present in the mappings, it returns an empty slice.
+// Returns a copy to prevent callers from mutating internal state.
 func GetCompliance(checkID string) []string {
-	if mappings, exists := CheckMappings[checkID]; exists {
-		return mappings
+	if mappings, exists := checkMappings[checkID]; exists {
+		// Return a copy to prevent mutation
+		result := make([]string, len(mappings))
+		copy(result, mappings)
+		return result
 	}
 	return []string{}
 }

@@ -134,7 +134,7 @@ func TestCheckMappings_Frameworks(t *testing.T) {
 	// Verify that mappings contain valid framework references
 	validPrefixes := []string{"CIS-", "SOC2-", "NIST-", "PCI-DSS-", "GDPR-"}
 
-	for checkID, mappings := range CheckMappings {
+	for checkID, mappings := range checkMappings {
 		for _, mapping := range mappings {
 			hasValidPrefix := false
 			for _, prefix := range validPrefixes {
@@ -174,7 +174,7 @@ func TestFrameworkConstants(t *testing.T) {
 
 func TestCheckMappings_NoEmptyMappings(t *testing.T) {
 	// Ensure no check has empty mappings array
-	for checkID, mappings := range CheckMappings {
+	for checkID, mappings := range checkMappings {
 		if len(mappings) == 0 {
 			t.Errorf("Check %s has empty mappings array", checkID)
 		}

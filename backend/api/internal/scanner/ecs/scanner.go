@@ -4,6 +4,7 @@ package ecs
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"cloudcop/api/internal/scanner"
@@ -48,6 +49,7 @@ func (e *Scanner) Scan(ctx context.Context, _ string) ([]scanner.Finding, error)
 	for _, taskDefArn := range taskDefs {
 		taskDef, err := e.describeTaskDefinition(ctx, taskDefArn)
 		if err != nil {
+			log.Printf("Warning: failed to describe task definition %s: %v", taskDefArn, err)
 			continue
 		}
 		findings = append(findings, e.checkPrivilegedContainers(ctx, taskDef)...)
