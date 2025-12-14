@@ -33,7 +33,15 @@ func (d *Scanner) Service() string {
 }
 
 // Scan executes all DynamoDB security checks.
-func (d *Scanner) Scan(ctx context.Context, _ string) ([]scanner.Finding, error) {
+func (d *Scanner) Scan(ctx context.Context, region string) ([]scanner.Finding, error) {
+	// Validate region parameter
+	if region == "" {
+		return nil, fmt.Errorf("region parameter cannot be empty")
+	}
+	if region != d.region {
+		return nil, fmt.Errorf("region mismatch: requested %s but scanner configured for %s", region, d.region)
+	}
+
 	var findings []scanner.Finding
 
 	tables, err := d.listTables(ctx)
