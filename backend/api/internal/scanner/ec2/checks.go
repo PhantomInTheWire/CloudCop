@@ -46,7 +46,8 @@ func (e *Scanner) checkPublicIP(_ context.Context, instance types.Instance) []sc
 	)}
 }
 
-func (e *Scanner) checkEBSEncryption(ctx context.Context, instance types.Instance) []scanner.Finding {
+// checkEBSEncryption checks if EBS volumes are encrypted using a pre-fetched volume map
+func (e *Scanner) checkEBSEncryption(instance types.Instance, volumeMap map[string]*types.Volume) []scanner.Finding {
 	instanceID := aws.ToString(instance.InstanceId)
 	var findings []scanner.Finding
 
@@ -55,32 +56,39 @@ func (e *Scanner) checkEBSEncryption(ctx context.Context, instance types.Instanc
 			continue
 		}
 		volumeID := aws.ToString(bdm.Ebs.VolumeId)
-		volumes, err := e.client.DescribeVolumes(ctx, &ec2.DescribeVolumesInput{
-			VolumeIds: []string{volumeID},
-		})
-		if err != nil {
+
+		vol, exists := volumeMap[volumeID]
+		if !exists {
+			// Volume not found in batch fetch - create error finding
+			findings = append(findings, e.createFinding(
+				"ec2_ebs_encryption",
+				volumeID,
+				"Unable to determine EBS encryption status",
+				fmt.Sprintf("Volume %s attached to %s could not be described", volumeID, instanceID),
+				scanner.StatusFail,
+				scanner.SeverityMedium,
+			))
 			continue
 		}
-		for _, vol := range volumes.Volumes {
-			if !aws.ToBool(vol.Encrypted) {
-				findings = append(findings, e.createFinding(
-					"ec2_ebs_encryption",
-					volumeID,
-					"EBS volume is not encrypted",
-					fmt.Sprintf("Volume %s attached to %s is not encrypted", volumeID, instanceID),
-					scanner.StatusFail,
-					scanner.SeverityMedium,
-				))
-			} else {
-				findings = append(findings, e.createFinding(
-					"ec2_ebs_encryption",
-					volumeID,
-					"EBS volume is encrypted",
-					fmt.Sprintf("Volume %s attached to %s is encrypted", volumeID, instanceID),
-					scanner.StatusPass,
-					scanner.SeverityMedium,
-				))
-			}
+
+		if !aws.ToBool(vol.Encrypted) {
+			findings = append(findings, e.createFinding(
+				"ec2_ebs_encryption",
+				volumeID,
+				"EBS volume is not encrypted",
+				fmt.Sprintf("Volume %s attached to %s is not encrypted", volumeID, instanceID),
+				scanner.StatusFail,
+				scanner.SeverityMedium,
+			))
+		} else {
+			findings = append(findings, e.createFinding(
+				"ec2_ebs_encryption",
+				volumeID,
+				"EBS volume is encrypted",
+				fmt.Sprintf("Volume %s attached to %s is encrypted", volumeID, instanceID),
+				scanner.StatusPass,
+				scanner.SeverityMedium,
+			))
 		}
 	}
 	return findings
