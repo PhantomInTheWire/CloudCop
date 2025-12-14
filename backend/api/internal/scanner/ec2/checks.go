@@ -178,28 +178,6 @@ func (e *Scanner) checkIAMRole(_ context.Context, instance types.Instance) []sca
 	)}
 }
 
-func (e *Scanner) checkCloudWatchMonitoring(_ context.Context, instance types.Instance) []scanner.Finding {
-	instanceID := aws.ToString(instance.InstanceId)
-	if instance.Monitoring != nil && instance.Monitoring.State == types.MonitoringStateEnabled {
-		return []scanner.Finding{e.createFinding(
-			"ec2_cloudwatch_monitoring",
-			instanceID,
-			"EC2 CloudWatch monitoring is enabled",
-			fmt.Sprintf("Instance %s has CloudWatch monitoring enabled", instanceID),
-			scanner.StatusPass,
-			scanner.SeverityLow,
-		)}
-	}
-	return []scanner.Finding{e.createFinding(
-		"ec2_cloudwatch_monitoring",
-		instanceID,
-		"EC2 CloudWatch monitoring is disabled",
-		fmt.Sprintf("Instance %s does not have CloudWatch monitoring enabled", instanceID),
-		scanner.StatusFail,
-		scanner.SeverityLow,
-	)}
-}
-
 func (e *Scanner) checkDetailedMonitoring(_ context.Context, instance types.Instance) []scanner.Finding {
 	instanceID := aws.ToString(instance.InstanceId)
 	if instance.Monitoring != nil && instance.Monitoring.State == types.MonitoringStateEnabled {
