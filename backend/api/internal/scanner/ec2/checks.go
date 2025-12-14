@@ -94,32 +94,39 @@ func (e *Scanner) checkEBSEncryption(instance types.Instance, volumeMap map[stri
 	return findings
 }
 
-func (e *Scanner) checkSecurityGroups(ctx context.Context, instance types.Instance) []scanner.Finding {
+func (e *Scanner) checkSecurityGroups(instance types.Instance, sgMap map[string]*types.SecurityGroup) []scanner.Finding {
 	instanceID := aws.ToString(instance.InstanceId)
 	var findings []scanner.Finding
 
 	for _, sg := range instance.SecurityGroups {
 		sgID := aws.ToString(sg.GroupId)
-		sgDetails, err := e.client.DescribeSecurityGroups(ctx, &ec2.DescribeSecurityGroupsInput{
-			GroupIds: []string{sgID},
-		})
-		if err != nil {
+
+		group, exists := sgMap[sgID]
+		if !exists {
+			// Security group not found in batch fetch
+			findings = append(findings, e.createFinding(
+				"ec2_instance_sg_unrestricted",
+				sgID,
+				"Unable to determine security group rules",
+				fmt.Sprintf("SG %s on instance %s could not be described", sgID, instanceID),
+				scanner.StatusFail,
+				scanner.SeverityHigh,
+			))
 			continue
 		}
-		for _, group := range sgDetails.SecurityGroups {
-			for _, perm := range group.IpPermissions {
-				for _, ipRange := range perm.IpRanges {
-					if aws.ToString(ipRange.CidrIp) == ipv4Any {
-						port := aws.ToInt32(perm.FromPort)
-						findings = append(findings, e.createFinding(
-							"ec2_instance_sg_unrestricted",
-							sgID,
-							"Security group allows unrestricted ingress",
-							fmt.Sprintf("SG %s on instance %s allows 0.0.0.0/0 on port %d", sgID, instanceID, port),
-							scanner.StatusFail,
-							scanner.SeverityHigh,
-						))
-					}
+
+		for _, perm := range group.IpPermissions {
+			for _, ipRange := range perm.IpRanges {
+				if aws.ToString(ipRange.CidrIp) == ipv4Any {
+					port := aws.ToInt32(perm.FromPort)
+					findings = append(findings, e.createFinding(
+						"ec2_instance_sg_unrestricted",
+						sgID,
+						"Security group allows unrestricted ingress",
+						fmt.Sprintf("SG %s on instance %s allows 0.0.0.0/0 on port %d", sgID, instanceID, port),
+						scanner.StatusFail,
+						scanner.SeverityHigh,
+					))
 				}
 			}
 		}

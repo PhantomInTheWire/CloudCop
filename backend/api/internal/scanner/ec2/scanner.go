@@ -47,10 +47,20 @@ func (e *Scanner) Scan(ctx context.Context, _ string) ([]scanner.Finding, error)
 
 	// Collect all volume IDs for batch fetching
 	volumeIDs := make([]string, 0)
+	sgIDs := make([]string, 0)
+	sgIDSet := make(map[string]bool)
+
 	for _, instance := range instances {
 		for _, bdm := range instance.BlockDeviceMappings {
 			if bdm.Ebs != nil && bdm.Ebs.VolumeId != nil {
 				volumeIDs = append(volumeIDs, *bdm.Ebs.VolumeId)
+			}
+		}
+		// Collect unique security group IDs
+		for _, sg := range instance.SecurityGroups {
+			if sg.GroupId != nil && !sgIDSet[*sg.GroupId] {
+				sgIDs = append(sgIDs, *sg.GroupId)
+				sgIDSet[*sg.GroupId] = true
 			}
 		}
 	}
@@ -74,11 +84,29 @@ func (e *Scanner) Scan(ctx context.Context, _ string) ([]scanner.Finding, error)
 		}
 	}
 
+	// Batch fetch all security groups
+	sgMap := make(map[string]*types.SecurityGroup)
+	if len(sgIDs) > 0 {
+		sgs, err := e.client.DescribeSecurityGroups(ctx, &ec2.DescribeSecurityGroupsInput{
+			GroupIds: sgIDs,
+		})
+		if err != nil {
+			fmt.Printf("Warning: failed to batch fetch security groups: %v\n", err)
+		} else {
+			for i := range sgs.SecurityGroups {
+				sg := &sgs.SecurityGroups[i]
+				if sg.GroupId != nil {
+					sgMap[*sg.GroupId] = sg
+				}
+			}
+		}
+	}
+
 	for _, instance := range instances {
 		instanceID := aws.ToString(instance.InstanceId)
 		findings = append(findings, e.checkPublicIP(ctx, instance)...)
 		findings = append(findings, e.checkEBSEncryption(instance, volumeMap)...)
-		findings = append(findings, e.checkSecurityGroups(ctx, instance)...)
+		findings = append(findings, e.checkSecurityGroups(instance, sgMap)...)
 		findings = append(findings, e.checkIMDSv2(ctx, instance)...)
 		findings = append(findings, e.checkIAMRole(ctx, instance)...)
 		findings = append(findings, e.checkCloudWatchMonitoring(ctx, instance)...)
