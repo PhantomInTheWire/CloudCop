@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+
 from app.routers import health
 
 app = FastAPI(title="CloudCop AI Service")

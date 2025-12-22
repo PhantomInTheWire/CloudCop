@@ -1,18 +1,24 @@
 [project]
 name = "ai"
 version = "0.1.0"
-description = "Add your description here"
+description = "CloudCop AI Service - Summarization and Analysis"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "dspy>=3.0.3",
     "fastapi>=0.120.4",
     "uvicorn>=0.38.0",
+    "grpcio>=1.68.0",
+    "grpcio-tools>=1.68.0",
+    "protobuf>=5.29.0",
+    "mypy>=1.14.0",
+    "bandit>=1.8.0",
 ]
 
 [tool.ruff]
 line-length = 88
 fix = true
+extend-exclude = ["grpc_gen"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
@@ -20,6 +26,9 @@ select = ["E", "F", "I"]
 [tool.mypy]
 ignore_missing_imports = true
 disallow_untyped_defs = true
+exclude = ["grpc_gen"]
+explicit_package_bases = true
+mypy_path = "."
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
