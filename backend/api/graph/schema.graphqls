@@ -37,6 +37,7 @@ type Scan {
   regions: [String!]
   overallScore: Int
   findings: [Finding!]
+  summary: ScanSummary
   startedAt: String
   completedAt: String
   createdAt: String!
@@ -52,6 +53,35 @@ type Finding {
   title: String!
   description: String!
   compliance: [String!]
+}
+
+type ScanSummary {
+  riskLevel: String!
+  riskScore: Int!
+  summaryText: String!
+  groups: [FindingGroupSummary!]!
+  actions: [ActionItemSummary!]!
+}
+
+type FindingGroupSummary {
+  groupId: String!
+  title: String!
+  service: String!
+  checkId: String!
+  severity: String!
+  findingCount: Int!
+  resourceIds: [String!]!
+  summary: String!
+  remedy: String!
+}
+
+type ActionItemSummary {
+  actionId: String!
+  title: String!
+  description: String!
+  severity: String!
+  commands: [String!]!
+  groupId: String!
 }
 
 type Mutation {

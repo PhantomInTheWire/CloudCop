@@ -75,12 +75,13 @@ func (r *mutationResolver) ConnectAccount(ctx context.Context, accountID string,
 }
 
 // StartScan is the resolver for the startScan field.
-func (r *mutationResolver) StartScan(ctx context.Context, _ string, services []string, regions []string) (*database.Scan, error) {
+func (r *mutationResolver) StartScan(ctx context.Context, accountID string, services []string, regions []string) (*database.Scan, error) {
 	if auth.FromContext(ctx) == nil {
 		return nil, fmt.Errorf("unauthorized")
 	}
 	// Convert ID
 	// dbID, _ := strconv.Atoi(accountID)
+	_ = accountID // TODO: Use for database lookup
 
 	// Create Scan record
 	// scan, err := r.DB.CreateScan(...)
@@ -130,11 +131,11 @@ func (r *queryResolver) Me(ctx context.Context) (*database.User, error) {
 }
 
 // Team is the resolver for the team field.
-func (r *queryResolver) Team(ctx context.Context, _ string) (*database.Team, error) {
+func (r *queryResolver) Team(ctx context.Context, slug string) (*database.Team, error) {
 	if auth.FromContext(ctx) == nil {
 		return nil, fmt.Errorf("unauthorized")
 	}
-	// Placeholder
+	_ = slug // TODO: Use for database lookup
 	return nil, nil
 }
 
@@ -147,12 +148,14 @@ func (r *queryResolver) MyAccounts(ctx context.Context) ([]model.AWSAccount, err
 }
 
 // ID is the resolver for the id field.
-func (r *scanResolver) ID(_ context.Context, obj *database.Scan) (string, error) {
+func (r *scanResolver) ID(ctx context.Context, obj *database.Scan) (string, error) {
+	_ = ctx
 	return fmt.Sprintf("%d", obj.ID), nil
 }
 
 // OverallScore is the resolver for the overallScore field.
-func (r *scanResolver) OverallScore(_ context.Context, obj *database.Scan) (*int, error) {
+func (r *scanResolver) OverallScore(ctx context.Context, obj *database.Scan) (*int, error) {
+	_ = ctx
 	if obj.OverallScore.Valid {
 		val := int(obj.OverallScore.Int32)
 		return &val, nil
@@ -161,12 +164,24 @@ func (r *scanResolver) OverallScore(_ context.Context, obj *database.Scan) (*int
 }
 
 // Findings is the resolver for the findings field.
-func (r *scanResolver) Findings(_ context.Context, _ *database.Scan) ([]model.Finding, error) {
+func (r *scanResolver) Findings(ctx context.Context, obj *database.Scan) ([]model.Finding, error) {
+	_ = ctx
+	_ = obj
 	return []model.Finding{}, nil
 }
 
+// Summary is the resolver for the summary field.
+func (r *scanResolver) Summary(ctx context.Context, obj *database.Scan) (*model.ScanSummary, error) {
+	// TODO: Implement summary retrieval from database or cache
+	// For now, return nil as summaries are generated on-demand during scan
+	_ = ctx
+	_ = obj
+	return nil, nil
+}
+
 // StartedAt is the resolver for the startedAt field.
-func (r *scanResolver) StartedAt(_ context.Context, obj *database.Scan) (*string, error) {
+func (r *scanResolver) StartedAt(ctx context.Context, obj *database.Scan) (*string, error) {
+	_ = ctx
 	if obj.StartedAt.Valid {
 		s := obj.StartedAt.Time.Format(time.RFC3339)
 		return &s, nil
@@ -175,7 +190,8 @@ func (r *scanResolver) StartedAt(_ context.Context, obj *database.Scan) (*string
 }
 
 // CompletedAt is the resolver for the completedAt field.
-func (r *scanResolver) CompletedAt(_ context.Context, obj *database.Scan) (*string, error) {
+func (r *scanResolver) CompletedAt(ctx context.Context, obj *database.Scan) (*string, error) {
+	_ = ctx
 	if obj.CompletedAt.Valid {
 		s := obj.CompletedAt.Time.Format(time.RFC3339)
 		return &s, nil
@@ -184,7 +200,8 @@ func (r *scanResolver) CompletedAt(_ context.Context, obj *database.Scan) (*stri
 }
 
 // CreatedAt is the resolver for the createdAt field.
-func (r *scanResolver) CreatedAt(_ context.Context, obj *database.Scan) (string, error) {
+func (r *scanResolver) CreatedAt(ctx context.Context, obj *database.Scan) (string, error) {
+	_ = ctx
 	if obj.CreatedAt.Valid {
 		return obj.CreatedAt.Time.Format(time.RFC3339), nil
 	}
@@ -192,27 +209,35 @@ func (r *scanResolver) CreatedAt(_ context.Context, obj *database.Scan) (string,
 }
 
 // ID is the resolver for the id field.
-func (r *teamResolver) ID(_ context.Context, obj *database.Team) (string, error) {
+func (r *teamResolver) ID(ctx context.Context, obj *database.Team) (string, error) {
+	_ = ctx
 	return fmt.Sprintf("%d", obj.ID), nil
 }
 
 // Members is the resolver for the members field.
-func (r *teamResolver) Members(_ context.Context, _ *database.Team) ([]database.TeamMember, error) {
+func (r *teamResolver) Members(ctx context.Context, obj *database.Team) ([]database.TeamMember, error) {
+	_ = ctx
+	_ = obj
 	return []database.TeamMember{}, nil
 }
 
 // AWSAccounts is the resolver for the awsAccounts field.
-func (r *teamResolver) AWSAccounts(_ context.Context, _ *database.Team) ([]model.AWSAccount, error) {
+func (r *teamResolver) AWSAccounts(ctx context.Context, obj *database.Team) ([]model.AWSAccount, error) {
+	_ = ctx
+	_ = obj
 	return []model.AWSAccount{}, nil
 }
 
 // User is the resolver for the user field.
-func (r *teamMemberResolver) User(_ context.Context, _ *database.TeamMember) (*database.User, error) {
+func (r *teamMemberResolver) User(ctx context.Context, obj *database.TeamMember) (*database.User, error) {
+	_ = ctx
+	_ = obj
 	return nil, nil
 }
 
 // Name is the resolver for the name field.
-func (r *userResolver) Name(_ context.Context, obj *database.User) (*string, error) {
+func (r *userResolver) Name(ctx context.Context, obj *database.User) (*string, error) {
+	_ = ctx
 	if obj.Name.Valid {
 		return &obj.Name.String, nil
 	}
@@ -220,7 +245,9 @@ func (r *userResolver) Name(_ context.Context, obj *database.User) (*string, err
 }
 
 // Teams is the resolver for the teams field.
-func (r *userResolver) Teams(_ context.Context, _ *database.User) ([]database.Team, error) {
+func (r *userResolver) Teams(ctx context.Context, obj *database.User) ([]database.Team, error) {
+	_ = ctx
+	_ = obj
 	return []database.Team{}, nil
 }
 

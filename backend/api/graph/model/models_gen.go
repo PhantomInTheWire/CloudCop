@@ -16,6 +16,15 @@ type AWSAccount struct {
 	Scans          []database.Scan `json:"scans,omitempty"`
 }
 
+type ActionItemSummary struct {
+	ActionID    string   `json:"actionId"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Severity    string   `json:"severity"`
+	Commands    []string `json:"commands"`
+	GroupID     string   `json:"groupId"`
+}
+
 type Finding struct {
 	ID          string   `json:"id"`
 	Service     string   `json:"service"`
@@ -28,8 +37,28 @@ type Finding struct {
 	Compliance  []string `json:"compliance,omitempty"`
 }
 
+type FindingGroupSummary struct {
+	GroupID      string   `json:"groupId"`
+	Title        string   `json:"title"`
+	Service      string   `json:"service"`
+	CheckID      string   `json:"checkId"`
+	Severity     string   `json:"severity"`
+	FindingCount int      `json:"findingCount"`
+	ResourceIds  []string `json:"resourceIds"`
+	Summary      string   `json:"summary"`
+	Remedy       string   `json:"remedy"`
+}
+
 type Mutation struct {
 }
 
 type Query struct {
+}
+
+type ScanSummary struct {
+	RiskLevel   string                `json:"riskLevel"`
+	RiskScore   int                   `json:"riskScore"`
+	SummaryText string                `json:"summaryText"`
+	Groups      []FindingGroupSummary `json:"groups"`
+	Actions     []ActionItemSummary   `json:"actions"`
 }
