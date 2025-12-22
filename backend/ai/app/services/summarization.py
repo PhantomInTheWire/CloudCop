@@ -223,7 +223,12 @@ class SummarizationServicer(summarization_pb2_grpc.SummarizationServiceServicer)
         finding_groups = []
         action_items = []
 
-        for group_key, group_findings in grouped.items():
+        total_groups = len(grouped)
+        logger.info(f"Processing {total_groups} finding groups...")
+
+        for i, (group_key, group_findings) in enumerate(grouped.items(), 1):
+            logger.info(f"Processing group {i}/{total_groups}: {group_key}")
+
             group = self._create_finding_group(group_key, group_findings, account_id)
             finding_groups.append(group)
 
@@ -234,8 +239,11 @@ class SummarizationServicer(summarization_pb2_grpc.SummarizationServiceServicer)
                 if f.status == summarization_pb2.FINDING_STATUS_FAIL
             ]
             if failed_findings and include_remediation:
+                logger.info(f"Generating remediation for group {i}/{total_groups}...")
                 action = self._create_action_item(group, account_id, failed_findings)
                 action_items.append(action)
+
+        logger.info("Finished processing all groups.")
 
         # Calculate risk summary
         risk_summary = self._calculate_risk_summary(findings)
