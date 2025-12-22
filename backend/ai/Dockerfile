@@ -15,20 +15,21 @@ ENV UV_LINK_MODE=copy
 # Install dependencies
 # --frozen ensures we use exact versions from uv.lock
 # --no-install-project avoids installing the package itself (we just want deps)
+# --no-dev excludes development dependencies (mypy, bandit, etc.)
 # We mount:
 # 1. /root/.cache/uv: for package cache
 # 2. /root/.local/share/uv: for managed python versions (toolchains)
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=cache,target=/root/.local/share/uv \
-    uv sync --frozen --no-install-project
+    uv sync --frozen --no-install-project --no-dev
 
 # Copy the application source code
 COPY . .
 
-# Install the project and sync environment
+# Install the project and sync environment (prod only)
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=cache,target=/root/.local/share/uv \
-    uv sync --frozen
+    uv sync --frozen --no-dev
 
 # Ensure the virtual environment is on PATH
 ENV PATH="/app/.venv/bin:$PATH"
