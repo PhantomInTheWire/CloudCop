@@ -103,6 +103,11 @@ func (r *mutationResolver) StartScan(ctx context.Context, accountID string, serv
 
 	// Return DB model stub
 	now := time.Now()
+	var score int32
+	if result.Summary != nil {
+		score = int32(result.Summary.RiskScore)
+	}
+
 	return &database.Scan{
 		ID:        scanID,
 		Status:    "completed",
@@ -110,7 +115,7 @@ func (r *mutationResolver) StartScan(ctx context.Context, accountID string, serv
 		Regions:   regions,
 		CreatedAt: pgtype.Timestamp{Time: now, Valid: true},
 		OverallScore: pgtype.Int4{
-			Int32: int32(result.Summary.RiskScore),
+			Int32: score,
 			Valid: result.Summary != nil,
 		},
 	}, nil
