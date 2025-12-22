@@ -1,6 +1,33 @@
 version: "3.8"
 
 services:
+  # LocalStack for local AWS simulation
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: cloudcop-localstack
+    restart: unless-stopped
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,ec2,iam,lambda,dynamodb,sts
+      - DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LAMBDA_EXECUTOR=local
+      - EAGER_SERVICE_LOADING=1
+    volumes:
+      - "${TMPDIR:-/tmp}/localstack:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - cloudcop-network
+
   # PostgreSQL Database
   postgres:
     image: postgres:17-alpine
@@ -106,7 +133,13 @@ services:
       PORT: 8080
       SELF_HOSTING: ${SELF_HOSTING:-1}
       CLERK_API_KEY: ${CLERK_API_KEY:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # LocalStack connection for local AWS simulation
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      # AI service connection
+      AI_SERVICE_GRPC_ADDR: ai-service:50051
     ports:
       - "8080:8080"
     depends_on:
@@ -114,20 +147,29 @@ services:
         condition: service_healthy
       neo4j:
         condition: service_healthy
+      localstack:
+        condition: service_healthy
     networks:
       - cloudcop-network
 
-  # Python MCP Server
-  mcp-server:
+  # Python AI Service (gRPC Summarization + FastAPI Health)
+  ai-service:
     build:
       context: ../backend/ai
       dockerfile: Dockerfile
-    container_name: cloudcop-mcp
+    container_name: cloudcop-ai
     restart: unless-stopped
+    ports:
+      - "8000:8000"   # FastAPI health endpoint
+      - "50051:50051" # gRPC summarization service
     environment:
       NEO4J_URI: bolt://neo4j:7687
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:-neo4j_dev}
+      # OpenRouter API (OpenAI-compatible)
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://openrouter.ai/api/v1}
+      OPENAI_MODEL: ${OPENAI_MODEL:-z-ai/glm-4.5-air:free}
     depends_on:
       neo4j:
         condition: service_healthy
