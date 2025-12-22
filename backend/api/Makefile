@@ -1,4 +1,4 @@
-.PHONY: e2e-up e2e-down e2e-test e2e-test-s3 e2e-test-ec2 e2e-test-iam e2e-test-lambda e2e-test-dynamodb
+.PHONY: e2e-up e2e-down e2e-test e2e-test-s3 e2e-test-ec2 e2e-test-iam e2e-test-lambda e2e-test-dynamodb e2e-setup-misconfigs e2e-list-resources e2e-full
 
 # Start LocalStack for E2E testing
 e2e-up:
@@ -44,3 +44,39 @@ e2e-status:
 # View LocalStack logs
 e2e-logs:
 	docker compose -f e2e/docker-compose.yml logs -f localstack
+
+# Setup misconfigured AWS resources for testing
+e2e-setup-misconfigs: e2e-up
+	@echo "Setting up misconfigured AWS resources in LocalStack..."
+	@./e2e/setup-misconfigs.sh
+
+# List all resources created in LocalStack
+e2e-list-resources:
+	@echo ""
+	@echo "=== S3 Buckets ==="
+	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 aws --endpoint-url http://localhost:4566 s3 ls 2>/dev/null || echo "  (none or LocalStack not running)"
+	@echo ""
+	@echo "=== DynamoDB Tables ==="
+	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 aws --endpoint-url http://localhost:4566 dynamodb list-tables --output table 2>/dev/null || echo "  (none or LocalStack not running)"
+	@echo ""
+	@echo "=== IAM Users ==="
+	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 aws --endpoint-url http://localhost:4566 iam list-users --query 'Users[*].UserName' --output table 2>/dev/null || echo "  (none or LocalStack not running)"
+	@echo ""
+	@echo "=== IAM Roles ==="
+	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 aws --endpoint-url http://localhost:4566 iam list-roles --query 'Roles[*].RoleName' --output table 2>/dev/null || echo "  (none or LocalStack not running)"
+	@echo ""
+	@echo "=== EC2 Security Groups ==="
+	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 aws --endpoint-url http://localhost:4566 ec2 describe-security-groups --query 'SecurityGroups[*].{Name:GroupName,ID:GroupId}' --output table 2>/dev/null || echo "  (none or LocalStack not running)"
+	@echo ""
+	@echo "=== Lambda Functions ==="
+	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 aws --endpoint-url http://localhost:4566 lambda list-functions --query 'Functions[*].FunctionName' --output table 2>/dev/null || echo "  (none or LocalStack not running)"
+
+# Full E2E workflow: start LocalStack, setup misconfigs, run tests
+e2e-full: e2e-up e2e-setup-misconfigs
+	@echo ""
+	@echo "=== Running E2E Scanner Tests ==="
+	go test -v -timeout 10m ./e2e/...
+
+# Clean up and reset LocalStack
+e2e-reset: e2e-down e2e-up
+	@echo "LocalStack has been reset"
