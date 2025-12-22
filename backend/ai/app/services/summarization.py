@@ -28,10 +28,15 @@ class LLMClient:
         primary_model = os.getenv("OPENAI_MODEL", "z-ai/glm-4.5-air:free")
         self.models = [primary_model]
 
-        # Add fallback/alternative model for rotation
-        secondary_model = "moonshotai/moonshot-v1-8k:free"
-        if secondary_model != primary_model:
-            self.models.append(secondary_model)
+        # Add fallback/alternative models for rotation
+        alternatives = [
+            "moonshotai/moonshot-v1-8k:free",
+            "openai/gpt-oss-120b:free",
+        ]
+
+        for alt in alternatives:
+            if alt != primary_model:
+                self.models.append(alt)
 
         if not self.api_key:
             logger.warning("OPENAI_API_KEY not set, LLM features will be disabled")
