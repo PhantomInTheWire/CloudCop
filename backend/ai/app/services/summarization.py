@@ -32,6 +32,7 @@ class LLMClient:
         alternatives = [
             "moonshotai/moonshot-v1-8k:free",
             "openai/gpt-oss-120b:free",
+            "google/gemini-2.0-flash-exp:free",
         ]
 
         for alt in alternatives:
@@ -72,7 +73,8 @@ class LLMClient:
 
                 if attempt < max_retries - 1:
                     # Exponential backoff: 2, 4, 8, 16, 32...
-                    delay = base_delay * (2**attempt) + random.uniform(0, 1)  # nosec
+                    # Increased jitter (0-3s) to prevent thundering herd with 8 workers
+                    delay = base_delay * (2**attempt) + random.uniform(0, 3)  # nosec
 
                     if is_rate_limit:
                         logger.warning(
@@ -282,9 +284,9 @@ class SummarizationServicer(summarization_pb2_grpc.SummarizationServiceServicer)
         action_items = []
 
         total_groups = len(grouped)
-        logger.info(f"Processing {total_groups} finding groups with parallelism=3...")
+        logger.info(f"Processing {total_groups} finding groups with parallelism=8...")
 
-        with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        with futures.ThreadPoolExecutor(max_workers=8) as executor:
             future_to_group = {
                 executor.submit(
                     self._process_group,
