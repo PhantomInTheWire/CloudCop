@@ -47,8 +47,9 @@ e2e-ai-demo:
 	@echo "=== 2. Setting up Misconfigurations ==="
 	@./e2e/setup-misconfigs.sh
 	@echo "=== 3. Running E2E Test with AI Summarization (Direct & GraphQL) ==="
+	@echo "NOTE: This may take 1-2 minutes to process all finding groups via LLM. Please wait."
 	@echo "Look for 'Risk Score', 'Summary Text', and 'Commands' in the output below:"
-	go test -v -count=1 -timeout 10m -run "TestSecurityService_E2E|TestGraphQL_StartScan_E2E" ./e2e/...
+	go test -v -count=1 -timeout 10m -run "TestSecurityService_E2E|TestGraphQL_StartScan_E2E" ./e2e/... || (echo "=== TEST FAILED. Dumping AI Service Logs ===" && cd ../../infra && docker compose logs ai-service && exit 1)
 
 # Stop the AI Demo Infrastructure
 e2e-ai-down:
