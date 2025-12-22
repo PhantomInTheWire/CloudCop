@@ -36,5 +36,5 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Add current directory to PYTHONPATH to ensure absolute imports work
 ENV PYTHONPATH="/app:$PYTHONPATH"
 
-# Run the application
-CMD ["python", "-m", "app.main"]
+# Run the application using uvicorn
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
