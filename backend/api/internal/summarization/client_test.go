@@ -131,6 +131,8 @@ func TestConvertResponse(t *testing.T) {
 				Compliance:        []string{"CIS"},
 				RiskScore:         75,
 				RecommendedAction: pb.ActionType_ACTION_TYPE_ALERT,
+				Summary:           "5 S3 buckets lack encryption",
+				Remedy:            "Enable SSE-S3 or SSE-KMS encryption",
 			},
 		},
 		RiskSummary: &pb.RiskSummary{
@@ -151,6 +153,7 @@ func TestConvertResponse(t *testing.T) {
 				Title:       "Fix encryption",
 				Description: "Enable encryption",
 				GroupId:     "s3:s3_bucket_encryption",
+				Commands:    []string{"aws s3api put-bucket-encryption --bucket bucket-1 ..."},
 			},
 		},
 	}
@@ -166,10 +169,19 @@ func TestConvertResponse(t *testing.T) {
 	if result.Groups[0].Title != "5 S3 resources failed s3_bucket_encryption" {
 		t.Errorf("Group title = %v, want expected", result.Groups[0].Title)
 	}
+	if result.Groups[0].Summary != "5 S3 buckets lack encryption" {
+		t.Errorf("Group summary = %v, want expected", result.Groups[0].Summary)
+	}
+	if result.Groups[0].Remedy != "Enable SSE-S3 or SSE-KMS encryption" {
+		t.Errorf("Group remedy = %v, want expected", result.Groups[0].Remedy)
+	}
 	if result.RiskSummary.OverallScore != 75 {
 		t.Errorf("OverallScore = %d, want 75", result.RiskSummary.OverallScore)
 	}
 	if len(result.Actions) != 1 {
 		t.Fatalf("Actions count = %d, want 1", len(result.Actions))
+	}
+	if len(result.Actions[0].Commands) != 1 {
+		t.Errorf("Commands count = %d, want 1", len(result.Actions[0].Commands))
 	}
 }

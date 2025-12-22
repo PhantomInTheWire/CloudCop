@@ -54,10 +54,10 @@ func (c *Client) SummarizeFindings(ctx context.Context, scanID, accountID string
 		AccountId: accountID,
 		Findings:  pbFindings,
 		Options: &pb.SummarizationOptions{
-			IncludeTerraformFixes: true,
-			GroupByService:        true,
-			GroupBySeverity:       false,
-			MaxGroups:             50,
+			IncludeRemediation: true,
+			GroupByService:     true,
+			GroupBySeverity:    false,
+			MaxGroups:          50,
 		},
 	}
 
@@ -90,6 +90,8 @@ type FindingGroup struct {
 	Compliance        []string
 	RiskScore         int
 	RecommendedAction string
+	Summary           string // AI-generated summary of the issue
+	Remedy            string // AI-generated remediation description
 }
 
 // RiskSummary contains overall risk metrics.
@@ -104,23 +106,15 @@ type RiskSummary struct {
 	SummaryText   string
 }
 
-// ActionItem represents a recommended action.
+// ActionItem represents a recommended action with CLI commands.
 type ActionItem struct {
-	ActionID     string
-	ActionType   string
-	Severity     string
-	Title        string
-	Description  string
-	GroupID      string
-	TerraformFix *TerraformFix
-}
-
-// TerraformFix contains generated Terraform code.
-type TerraformFix struct {
-	ResourceType string
-	ResourceName string
-	Code         string
-	Explanation  string
+	ActionID    string
+	ActionType  string
+	Severity    string
+	Title       string
+	Description string
+	GroupID     string
+	Commands    []string // AWS CLI commands for remediation
 }
 
 func convertFinding(f scanner.Finding) *pb.Finding {
@@ -179,28 +173,22 @@ func convertResponse(resp *pb.SummarizeFindingsResponse) *SummaryResult {
 			Compliance:        g.Compliance,
 			RiskScore:         int(g.RiskScore),
 			RecommendedAction: actionToString(g.RecommendedAction),
+			Summary:           g.Summary,
+			Remedy:            g.Remedy,
 		}
 	}
 
 	actions := make([]ActionItem, len(resp.ActionItems))
 	for i, a := range resp.ActionItems {
-		action := ActionItem{
+		actions[i] = ActionItem{
 			ActionID:    a.ActionId,
 			ActionType:  actionToString(a.ActionType),
 			Severity:    severityToString(a.Severity),
 			Title:       a.Title,
 			Description: a.Description,
 			GroupID:     a.GroupId,
+			Commands:    a.Commands,
 		}
-		if a.TerraformFix != nil {
-			action.TerraformFix = &TerraformFix{
-				ResourceType: a.TerraformFix.ResourceType,
-				ResourceName: a.TerraformFix.ResourceName,
-				Code:         a.TerraformFix.Code,
-				Explanation:  a.TerraformFix.Explanation,
-			}
-		}
-		actions[i] = action
 	}
 
 	var riskSummary RiskSummary

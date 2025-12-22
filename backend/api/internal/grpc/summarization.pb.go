@@ -132,7 +132,7 @@ type ActionType int32
 
 const (
 	ActionType_ACTION_TYPE_UNSPECIFIED ActionType = 0
-	ActionType_ACTION_TYPE_SUGGEST_FIX ActionType = 1 // Generate Terraform fix snippet
+	ActionType_ACTION_TYPE_SUGGEST_FIX ActionType = 1 // Suggest remediation commands
 	ActionType_ACTION_TYPE_ALERT       ActionType = 2 // Dashboard alert
 	ActionType_ACTION_TYPE_ESCALATE    ActionType = 3 // Immediate attention required
 )
@@ -368,13 +368,13 @@ func (x *SummarizeFindingsRequest) GetOptions() *SummarizationOptions {
 
 // SummarizationOptions configures the summarization behavior
 type SummarizationOptions struct {
-	state                 protoimpl.MessageState `protogen:"open.v1"`
-	IncludeTerraformFixes bool                   `protobuf:"varint,1,opt,name=include_terraform_fixes,json=includeTerraformFixes,proto3" json:"include_terraform_fixes,omitempty"` // Generate Terraform fix snippets
-	GroupByService        bool                   `protobuf:"varint,2,opt,name=group_by_service,json=groupByService,proto3" json:"group_by_service,omitempty"`                      // Group findings by service
-	GroupBySeverity       bool                   `protobuf:"varint,3,opt,name=group_by_severity,json=groupBySeverity,proto3" json:"group_by_severity,omitempty"`                   // Group findings by severity
-	MaxGroups             int32                  `protobuf:"varint,4,opt,name=max_groups,json=maxGroups,proto3" json:"max_groups,omitempty"`                                       // Maximum number of groups to return
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	IncludeRemediation bool                   `protobuf:"varint,1,opt,name=include_remediation,json=includeRemediation,proto3" json:"include_remediation,omitempty"` // Generate remediation commands
+	GroupByService     bool                   `protobuf:"varint,2,opt,name=group_by_service,json=groupByService,proto3" json:"group_by_service,omitempty"`           // Group findings by service
+	GroupBySeverity    bool                   `protobuf:"varint,3,opt,name=group_by_severity,json=groupBySeverity,proto3" json:"group_by_severity,omitempty"`        // Group findings by severity
+	MaxGroups          int32                  `protobuf:"varint,4,opt,name=max_groups,json=maxGroups,proto3" json:"max_groups,omitempty"`                            // Maximum number of groups to return
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *SummarizationOptions) Reset() {
@@ -407,9 +407,9 @@ func (*SummarizationOptions) Descriptor() ([]byte, []int) {
 	return file_summarization_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SummarizationOptions) GetIncludeTerraformFixes() bool {
+func (x *SummarizationOptions) GetIncludeRemediation() bool {
 	if x != nil {
-		return x.IncludeTerraformFixes
+		return x.IncludeRemediation
 	}
 	return false
 }
@@ -518,6 +518,8 @@ type FindingGroup struct {
 	Compliance        []string               `protobuf:"bytes,9,rep,name=compliance,proto3" json:"compliance,omitempty"`                                      // Applicable compliance frameworks
 	RiskScore         int32                  `protobuf:"varint,10,opt,name=risk_score,json=riskScore,proto3" json:"risk_score,omitempty"`                     // Calculated risk score (0-100)
 	RecommendedAction ActionType             `protobuf:"varint,11,opt,name=recommended_action,json=recommendedAction,proto3,enum=cloudcop.summarization.v1.ActionType" json:"recommended_action,omitempty"`
+	Summary           string                 `protobuf:"bytes,12,opt,name=summary,proto3" json:"summary,omitempty"` // AI-generated summary of the issue
+	Remedy            string                 `protobuf:"bytes,13,opt,name=remedy,proto3" json:"remedy,omitempty"`   // AI-generated remediation description
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -629,6 +631,20 @@ func (x *FindingGroup) GetRecommendedAction() ActionType {
 	return ActionType_ACTION_TYPE_UNSPECIFIED
 }
 
+func (x *FindingGroup) GetSummary() string {
+	if x != nil {
+		return x.Summary
+	}
+	return ""
+}
+
+func (x *FindingGroup) GetRemedy() string {
+	if x != nil {
+		return x.Remedy
+	}
+	return ""
+}
+
 // RiskSummary provides overall risk metrics
 type RiskSummary struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -730,7 +746,7 @@ func (x *RiskSummary) GetSummaryText() string {
 	return ""
 }
 
-// ActionItem represents a recommended action
+// ActionItem represents a recommended action with CLI commands
 type ActionItem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
@@ -738,8 +754,8 @@ type ActionItem struct {
 	Severity      Severity               `protobuf:"varint,3,opt,name=severity,proto3,enum=cloudcop.summarization.v1.Severity" json:"severity,omitempty"`
 	Title         string                 `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
 	Description   string                 `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
-	GroupId       string                 `protobuf:"bytes,6,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`                // Reference to finding group
-	TerraformFix  *TerraformFix          `protobuf:"bytes,7,opt,name=terraform_fix,json=terraformFix,proto3" json:"terraform_fix,omitempty"` // Optional Terraform fix
+	GroupId       string                 `protobuf:"bytes,6,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"` // Reference to finding group
+	Commands      []string               `protobuf:"bytes,7,rep,name=commands,proto3" json:"commands,omitempty"`              // AWS CLI commands for remediation
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -816,80 +832,11 @@ func (x *ActionItem) GetGroupId() string {
 	return ""
 }
 
-func (x *ActionItem) GetTerraformFix() *TerraformFix {
+func (x *ActionItem) GetCommands() []string {
 	if x != nil {
-		return x.TerraformFix
+		return x.Commands
 	}
 	return nil
-}
-
-// TerraformFix contains generated Terraform code
-type TerraformFix struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ResourceType  string                 `protobuf:"bytes,1,opt,name=resource_type,json=resourceType,proto3" json:"resource_type,omitempty"` // e.g., "aws_s3_bucket_public_access_block"
-	ResourceName  string                 `protobuf:"bytes,2,opt,name=resource_name,json=resourceName,proto3" json:"resource_name,omitempty"` // e.g., "prod_logs"
-	Code          string                 `protobuf:"bytes,3,opt,name=code,proto3" json:"code,omitempty"`                                     // The Terraform HCL code
-	Explanation   string                 `protobuf:"bytes,4,opt,name=explanation,proto3" json:"explanation,omitempty"`                       // Why this fix is recommended
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TerraformFix) Reset() {
-	*x = TerraformFix{}
-	mi := &file_summarization_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TerraformFix) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TerraformFix) ProtoMessage() {}
-
-func (x *TerraformFix) ProtoReflect() protoreflect.Message {
-	mi := &file_summarization_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TerraformFix.ProtoReflect.Descriptor instead.
-func (*TerraformFix) Descriptor() ([]byte, []int) {
-	return file_summarization_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *TerraformFix) GetResourceType() string {
-	if x != nil {
-		return x.ResourceType
-	}
-	return ""
-}
-
-func (x *TerraformFix) GetResourceName() string {
-	if x != nil {
-		return x.ResourceName
-	}
-	return ""
-}
-
-func (x *TerraformFix) GetCode() string {
-	if x != nil {
-		return x.Code
-	}
-	return ""
-}
-
-func (x *TerraformFix) GetExplanation() string {
-	if x != nil {
-		return x.Explanation
-	}
-	return ""
 }
 
 var File_summarization_proto protoreflect.FileDescriptor
@@ -917,9 +864,9 @@ const file_summarization_proto_rawDesc = "" +
 	"\n" +
 	"account_id\x18\x02 \x01(\tR\taccountId\x12>\n" +
 	"\bfindings\x18\x03 \x03(\v2\".cloudcop.summarization.v1.FindingR\bfindings\x12I\n" +
-	"\aoptions\x18\x04 \x01(\v2/.cloudcop.summarization.v1.SummarizationOptionsR\aoptions\"\xc3\x01\n" +
-	"\x14SummarizationOptions\x126\n" +
-	"\x17include_terraform_fixes\x18\x01 \x01(\bR\x15includeTerraformFixes\x12(\n" +
+	"\aoptions\x18\x04 \x01(\v2/.cloudcop.summarization.v1.SummarizationOptionsR\aoptions\"\xbc\x01\n" +
+	"\x14SummarizationOptions\x12/\n" +
+	"\x13include_remediation\x18\x01 \x01(\bR\x12includeRemediation\x12(\n" +
 	"\x10group_by_service\x18\x02 \x01(\bR\x0egroupByService\x12*\n" +
 	"\x11group_by_severity\x18\x03 \x01(\bR\x0fgroupBySeverity\x12\x1d\n" +
 	"\n" +
@@ -928,7 +875,7 @@ const file_summarization_proto_rawDesc = "" +
 	"\ascan_id\x18\x01 \x01(\tR\x06scanId\x12?\n" +
 	"\x06groups\x18\x02 \x03(\v2'.cloudcop.summarization.v1.FindingGroupR\x06groups\x12I\n" +
 	"\frisk_summary\x18\x03 \x01(\v2&.cloudcop.summarization.v1.RiskSummaryR\vriskSummary\x12H\n" +
-	"\faction_items\x18\x04 \x03(\v2%.cloudcop.summarization.v1.ActionItemR\vactionItems\"\xb4\x03\n" +
+	"\faction_items\x18\x04 \x03(\v2%.cloudcop.summarization.v1.ActionItemR\vactionItems\"\xe6\x03\n" +
 	"\fFindingGroup\x12\x19\n" +
 	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
@@ -944,7 +891,9 @@ const file_summarization_proto_rawDesc = "" +
 	"\n" +
 	"risk_score\x18\n" +
 	" \x01(\x05R\triskScore\x12T\n" +
-	"\x12recommended_action\x18\v \x01(\x0e2%.cloudcop.summarization.v1.ActionTypeR\x11recommendedAction\"\x9d\x02\n" +
+	"\x12recommended_action\x18\v \x01(\x0e2%.cloudcop.summarization.v1.ActionTypeR\x11recommendedAction\x12\x18\n" +
+	"\asummary\x18\f \x01(\tR\asummary\x12\x16\n" +
+	"\x06remedy\x18\r \x01(\tR\x06remedy\"\x9d\x02\n" +
 	"\vRiskSummary\x12#\n" +
 	"\roverall_score\x18\x01 \x01(\x05R\foverallScore\x12%\n" +
 	"\x0ecritical_count\x18\x02 \x01(\x05R\rcriticalCount\x12\x1d\n" +
@@ -955,7 +904,7 @@ const file_summarization_proto_rawDesc = "" +
 	"\fpassed_count\x18\x06 \x01(\x05R\vpassedCount\x12\x1d\n" +
 	"\n" +
 	"risk_level\x18\a \x01(\tR\triskLevel\x12!\n" +
-	"\fsummary_text\x18\b \x01(\tR\vsummaryText\"\xd3\x02\n" +
+	"\fsummary_text\x18\b \x01(\tR\vsummaryText\"\xa1\x02\n" +
 	"\n" +
 	"ActionItem\x12\x1b\n" +
 	"\taction_id\x18\x01 \x01(\tR\bactionId\x12F\n" +
@@ -964,13 +913,8 @@ const file_summarization_proto_rawDesc = "" +
 	"\bseverity\x18\x03 \x01(\x0e2#.cloudcop.summarization.v1.SeverityR\bseverity\x12\x14\n" +
 	"\x05title\x18\x04 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x19\n" +
-	"\bgroup_id\x18\x06 \x01(\tR\agroupId\x12L\n" +
-	"\rterraform_fix\x18\a \x01(\v2'.cloudcop.summarization.v1.TerraformFixR\fterraformFix\"\x8e\x01\n" +
-	"\fTerraformFix\x12#\n" +
-	"\rresource_type\x18\x01 \x01(\tR\fresourceType\x12#\n" +
-	"\rresource_name\x18\x02 \x01(\tR\fresourceName\x12\x12\n" +
-	"\x04code\x18\x03 \x01(\tR\x04code\x12 \n" +
-	"\vexplanation\x18\x04 \x01(\tR\vexplanation*u\n" +
+	"\bgroup_id\x18\x06 \x01(\tR\agroupId\x12\x1a\n" +
+	"\bcommands\x18\a \x03(\tR\bcommands*u\n" +
 	"\bSeverity\x12\x18\n" +
 	"\x14SEVERITY_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fSEVERITY_LOW\x10\x01\x12\x13\n" +
@@ -1004,7 +948,7 @@ func file_summarization_proto_rawDescGZIP() []byte {
 }
 
 var file_summarization_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_summarization_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_summarization_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_summarization_proto_goTypes = []any{
 	(Severity)(0),                     // 0: cloudcop.summarization.v1.Severity
 	(FindingStatus)(0),                // 1: cloudcop.summarization.v1.FindingStatus
@@ -1016,7 +960,6 @@ var file_summarization_proto_goTypes = []any{
 	(*FindingGroup)(nil),              // 7: cloudcop.summarization.v1.FindingGroup
 	(*RiskSummary)(nil),               // 8: cloudcop.summarization.v1.RiskSummary
 	(*ActionItem)(nil),                // 9: cloudcop.summarization.v1.ActionItem
-	(*TerraformFix)(nil),              // 10: cloudcop.summarization.v1.TerraformFix
 }
 var file_summarization_proto_depIdxs = []int32{
 	1,  // 0: cloudcop.summarization.v1.Finding.status:type_name -> cloudcop.summarization.v1.FindingStatus
@@ -1030,16 +973,15 @@ var file_summarization_proto_depIdxs = []int32{
 	2,  // 8: cloudcop.summarization.v1.FindingGroup.recommended_action:type_name -> cloudcop.summarization.v1.ActionType
 	2,  // 9: cloudcop.summarization.v1.ActionItem.action_type:type_name -> cloudcop.summarization.v1.ActionType
 	0,  // 10: cloudcop.summarization.v1.ActionItem.severity:type_name -> cloudcop.summarization.v1.Severity
-	10, // 11: cloudcop.summarization.v1.ActionItem.terraform_fix:type_name -> cloudcop.summarization.v1.TerraformFix
-	4,  // 12: cloudcop.summarization.v1.SummarizationService.SummarizeFindings:input_type -> cloudcop.summarization.v1.SummarizeFindingsRequest
-	3,  // 13: cloudcop.summarization.v1.SummarizationService.StreamSummarizeFindings:input_type -> cloudcop.summarization.v1.Finding
-	6,  // 14: cloudcop.summarization.v1.SummarizationService.SummarizeFindings:output_type -> cloudcop.summarization.v1.SummarizeFindingsResponse
-	6,  // 15: cloudcop.summarization.v1.SummarizationService.StreamSummarizeFindings:output_type -> cloudcop.summarization.v1.SummarizeFindingsResponse
-	14, // [14:16] is the sub-list for method output_type
-	12, // [12:14] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	4,  // 11: cloudcop.summarization.v1.SummarizationService.SummarizeFindings:input_type -> cloudcop.summarization.v1.SummarizeFindingsRequest
+	3,  // 12: cloudcop.summarization.v1.SummarizationService.StreamSummarizeFindings:input_type -> cloudcop.summarization.v1.Finding
+	6,  // 13: cloudcop.summarization.v1.SummarizationService.SummarizeFindings:output_type -> cloudcop.summarization.v1.SummarizeFindingsResponse
+	6,  // 14: cloudcop.summarization.v1.SummarizationService.StreamSummarizeFindings:output_type -> cloudcop.summarization.v1.SummarizeFindingsResponse
+	13, // [13:15] is the sub-list for method output_type
+	11, // [11:13] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_summarization_proto_init() }
@@ -1053,7 +995,7 @@ func file_summarization_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_summarization_proto_rawDesc), len(file_summarization_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   8,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
