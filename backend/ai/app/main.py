@@ -18,15 +18,17 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Manage application lifecycle - start gRPC server."""
-    logger.info("Starting gRPC server on port 50051...")
+    print("DEBUG: Starting gRPC server on port 50051...", flush=True)
     # Start gRPC server in background thread
     try:
         grpc_server = grpc_serve(port=50051)
         grpc_server.start()
-        logger.info("gRPC server started successfully on [::]:50051")
+        print("DEBUG: gRPC server started successfully on [::]:50051", flush=True)
 
         def wait_for_termination() -> None:
+            print("DEBUG: Waiting for gRPC termination...", flush=True)
             grpc_server.wait_for_termination()
+            print("DEBUG: gRPC termination wait ended", flush=True)
 
         grpc_thread = threading.Thread(target=wait_for_termination, daemon=True)
         grpc_thread.start()
@@ -34,10 +36,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
 
         # Cleanup
-        logger.info("Stopping gRPC server...")
+        print("DEBUG: Stopping gRPC server...", flush=True)
         grpc_server.stop(grace=5)
-        logger.info("gRPC server stopped")
+        print("DEBUG: gRPC server stopped", flush=True)
     except Exception as e:
+        print(f"DEBUG: Failed to start gRPC server: {e}", flush=True)
         logger.error(f"Failed to start gRPC server: {e}")
         raise
 
