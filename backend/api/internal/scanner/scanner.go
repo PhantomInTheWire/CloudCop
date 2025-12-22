@@ -103,3 +103,63 @@ type ScanItem struct {
 	// Findings is the list of findings for this service/region.
 	Findings []Finding `json:"findings"`
 }
+
+// ScanSummary contains AI-generated summaries and remediation commands.
+type ScanSummary struct {
+	// Groups contains grouped findings with AI summaries.
+	Groups []FindingGroupSummary `json:"groups"`
+	// RiskLevel is the overall risk level (LOW, MEDIUM, HIGH, CRITICAL).
+	RiskLevel string `json:"risk_level"`
+	// RiskScore is the overall risk score (0-100).
+	RiskScore int `json:"risk_score"`
+	// SummaryText is an AI-generated summary of the scan results.
+	SummaryText string `json:"summary_text"`
+	// Actions contains recommended actions with CLI commands.
+	Actions []ActionItemSummary `json:"actions"`
+}
+
+// FindingGroupSummary contains AI-generated summary for a group of findings.
+type FindingGroupSummary struct {
+	// GroupID is the unique identifier for this group.
+	GroupID string `json:"group_id"`
+	// Title is a short description of the group.
+	Title string `json:"title"`
+	// Service is the AWS service.
+	Service string `json:"service"`
+	// CheckID is the security check identifier.
+	CheckID string `json:"check_id"`
+	// Severity is the highest severity in the group.
+	Severity string `json:"severity"`
+	// FindingCount is the number of findings in the group.
+	FindingCount int `json:"finding_count"`
+	// ResourceIDs are the affected resources.
+	ResourceIDs []string `json:"resource_ids"`
+	// Summary is an AI-generated summary of the issue.
+	Summary string `json:"summary"`
+	// Remedy is an AI-generated remediation description.
+	Remedy string `json:"remedy"`
+}
+
+// ActionItemSummary contains a recommended action with CLI commands.
+type ActionItemSummary struct {
+	// ActionID is the unique identifier for this action.
+	ActionID string `json:"action_id"`
+	// Title is a short description of the action.
+	Title string `json:"title"`
+	// Description provides details about the action.
+	Description string `json:"description"`
+	// Severity indicates the priority.
+	Severity string `json:"severity"`
+	// Commands are AWS CLI commands for remediation.
+	Commands []string `json:"commands"`
+	// GroupID is the related finding group.
+	GroupID string `json:"group_id"`
+}
+
+// ScanResultWithSummary combines scan results with AI-generated summaries.
+type ScanResultWithSummary struct {
+	// ScanResult contains the raw scan results.
+	*ScanResult
+	// Summary contains AI-generated summaries (nil if summarization was skipped).
+	Summary *ScanSummary `json:"summary,omitempty"`
+}

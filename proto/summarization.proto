@@ -32,7 +32,7 @@ enum FindingStatus {
 // ActionType represents the recommended action for a finding group
 enum ActionType {
   ACTION_TYPE_UNSPECIFIED = 0;
-  ACTION_TYPE_SUGGEST_FIX = 1;  // Generate Terraform fix snippet
+  ACTION_TYPE_SUGGEST_FIX = 1;  // Suggest remediation commands
   ACTION_TYPE_ALERT = 2;        // Dashboard alert
   ACTION_TYPE_ESCALATE = 3;     // Immediate attention required
 }
@@ -61,10 +61,10 @@ message SummarizeFindingsRequest {
 
 // SummarizationOptions configures the summarization behavior
 message SummarizationOptions {
-  bool include_terraform_fixes = 1;  // Generate Terraform fix snippets
-  bool group_by_service = 2;         // Group findings by service
-  bool group_by_severity = 3;        // Group findings by severity
-  int32 max_groups = 4;              // Maximum number of groups to return
+  bool include_remediation = 1;     // Generate remediation commands
+  bool group_by_service = 2;        // Group findings by service
+  bool group_by_severity = 3;       // Group findings by severity
+  int32 max_groups = 4;             // Maximum number of groups to return
 }
 
 // SummarizeFindingsResponse contains the summarized analysis
@@ -88,6 +88,8 @@ message FindingGroup {
   repeated string compliance = 9;    // Applicable compliance frameworks
   int32 risk_score = 10;        // Calculated risk score (0-100)
   ActionType recommended_action = 11;
+  string summary = 12;          // AI-generated summary of the issue
+  string remedy = 13;           // AI-generated remediation description
 }
 
 // RiskSummary provides overall risk metrics
@@ -102,7 +104,7 @@ message RiskSummary {
   string summary_text = 8;      // AI-generated summary text
 }
 
-// ActionItem represents a recommended action
+// ActionItem represents a recommended action with CLI commands
 message ActionItem {
   string action_id = 1;
   ActionType action_type = 2;
@@ -110,13 +112,5 @@ message ActionItem {
   string title = 4;
   string description = 5;
   string group_id = 6;          // Reference to finding group
-  TerraformFix terraform_fix = 7;  // Optional Terraform fix
-}
-
-// TerraformFix contains generated Terraform code
-message TerraformFix {
-  string resource_type = 1;     // e.g., "aws_s3_bucket_public_access_block"
-  string resource_name = 2;     // e.g., "prod_logs"
-  string code = 3;              // The Terraform HCL code
-  string explanation = 4;       // Why this fix is recommended
+  repeated string commands = 7; // AWS CLI commands for remediation
 }
