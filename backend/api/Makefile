@@ -45,31 +45,10 @@ e2e-status:
 e2e-logs:
 	docker compose -f e2e/docker-compose.yml logs -f localstack
 
-# Setup misconfigured AWS resources for testing
-e2e-setup-misconfigs: e2e-up
+# Setup misconfigured AWS resources for testing (without starting LocalStack)
+e2e-setup-only:
 	@echo "Setting up misconfigured AWS resources in LocalStack..."
 	@./e2e/setup-misconfigs.sh
-
-# List all resources created in LocalStack
-e2e-list-resources:
-	@echo ""
-	@echo "=== S3 Buckets ==="
-	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 aws --endpoint-url http://localhost:4566 s3 ls 2>/dev/null || echo "  (none or LocalStack not running)"
-	@echo ""
-	@echo "=== DynamoDB Tables ==="
-	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 aws --endpoint-url http://localhost:4566 dynamodb list-tables --output table 2>/dev/null || echo "  (none or LocalStack not running)"
-	@echo ""
-	@echo "=== IAM Users ==="
-	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 aws --endpoint-url http://localhost:4566 iam list-users --query 'Users[*].UserName' --output table 2>/dev/null || echo "  (none or LocalStack not running)"
-	@echo ""
-	@echo "=== IAM Roles ==="
-	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 aws --endpoint-url http://localhost:4566 iam list-roles --query 'Roles[*].RoleName' --output table 2>/dev/null || echo "  (none or LocalStack not running)"
-	@echo ""
-	@echo "=== EC2 Security Groups ==="
-	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 aws --endpoint-url http://localhost:4566 ec2 describe-security-groups --query 'SecurityGroups[*].{Name:GroupName,ID:GroupId}' --output table 2>/dev/null || echo "  (none or LocalStack not running)"
-	@echo ""
-	@echo "=== Lambda Functions ==="
-	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 aws --endpoint-url http://localhost:4566 lambda list-functions --query 'Functions[*].FunctionName' --output table 2>/dev/null || echo "  (none or LocalStack not running)"
 
 # Full E2E workflow: start LocalStack, setup misconfigs, run tests
 e2e-full: e2e-up e2e-setup-misconfigs
