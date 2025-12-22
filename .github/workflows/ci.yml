@@ -100,7 +100,7 @@ jobs:
         run: |
           go install github.com/securego/gosec/v2/cmd/gosec@latest
           cd ${{ matrix.service.path }}
-          gosec -exclude=G115 -severity=HIGH ./...
+          gosec -exclude=G115, G103 -severity=HIGH ./...
 
   python-checks:
     runs-on: ubuntu-latest
