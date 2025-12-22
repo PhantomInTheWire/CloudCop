@@ -26,13 +26,13 @@ jobs:
           node-version: 20
 
       - name: Set up Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
       - name: Install commitlint
         run: |
-          bun add -g @commitlint/cli @commitlint/config-conventional
+          bun install
 
       - name: Validate PR commits
         run: |
@@ -153,11 +153,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-          cache: "bun"
-          cache-dependency-path: frontend/bun.lock
 
       - name: Frontend lint and format
         run: |
