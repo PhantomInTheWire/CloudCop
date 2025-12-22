@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+package cloudcop.summarization.v1;
+
+option go_package = "cloudcop/api/internal/grpc/summarization";
+
+// SummarizationService handles AI-powered analysis and summarization of security findings
+service SummarizationService {
+  // SummarizeFindings groups and analyzes raw security findings
+  rpc SummarizeFindings(SummarizeFindingsRequest) returns (SummarizeFindingsResponse);
+
+  // StreamSummarizeFindings allows streaming large sets of findings
+  rpc StreamSummarizeFindings(stream Finding) returns (SummarizeFindingsResponse);
+}
+
+// Severity levels for security findings
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_LOW = 1;
+  SEVERITY_MEDIUM = 2;
+  SEVERITY_HIGH = 3;
+  SEVERITY_CRITICAL = 4;
+}
+
+// FindingStatus indicates whether a check passed or failed
+enum FindingStatus {
+  FINDING_STATUS_UNSPECIFIED = 0;
+  FINDING_STATUS_PASS = 1;
+  FINDING_STATUS_FAIL = 2;
+}
+
+// ActionType represents the recommended action for a finding group
+enum ActionType {
+  ACTION_TYPE_UNSPECIFIED = 0;
+  ACTION_TYPE_SUGGEST_FIX = 1;  // Generate Terraform fix snippet
+  ACTION_TYPE_ALERT = 2;        // Dashboard alert
+  ACTION_TYPE_ESCALATE = 3;     // Immediate attention required
+}
+
+// Finding represents a single security finding from a scan
+message Finding {
+  string service = 1;           // AWS service (s3, ec2, iam, etc.)
+  string region = 2;            // AWS region
+  string resource_id = 3;       // AWS resource identifier
+  string check_id = 4;          // Security check identifier
+  FindingStatus status = 5;     // Pass or fail
+  Severity severity = 6;        // Severity level
+  string title = 7;             // Short description
+  string description = 8;       // Detailed description
+  repeated string compliance = 9; // Compliance frameworks (CIS, SOC2, etc.)
+  int64 timestamp_unix = 10;    // Unix timestamp when detected
+}
+
+// SummarizeFindingsRequest contains findings to be summarized
+message SummarizeFindingsRequest {
+  string scan_id = 1;           // Unique scan identifier
+  string account_id = 2;        // AWS account ID
+  repeated Finding findings = 3; // Raw findings to summarize
+  SummarizationOptions options = 4; // Optional configuration
+}
+
+// SummarizationOptions configures the summarization behavior
+message SummarizationOptions {
+  bool include_terraform_fixes = 1;  // Generate Terraform fix snippets
+  bool group_by_service = 2;         // Group findings by service
+  bool group_by_severity = 3;        // Group findings by severity
+  int32 max_groups = 4;              // Maximum number of groups to return
+}
+
+// SummarizeFindingsResponse contains the summarized analysis
+message SummarizeFindingsResponse {
+  string scan_id = 1;
+  repeated FindingGroup groups = 2;     // Grouped findings
+  RiskSummary risk_summary = 3;         // Overall risk assessment
+  repeated ActionItem action_items = 4; // Recommended actions
+}
+
+// FindingGroup represents a group of similar findings
+message FindingGroup {
+  string group_id = 1;
+  string title = 2;             // e.g., "15 S3 buckets lack encryption"
+  string description = 3;       // Detailed explanation
+  Severity severity = 4;        // Highest severity in group
+  int32 finding_count = 5;      // Number of findings in group
+  repeated string resource_ids = 6;  // Affected resources
+  string check_id = 7;          // Common check ID
+  string service = 8;           // AWS service
+  repeated string compliance = 9;    // Applicable compliance frameworks
+  int32 risk_score = 10;        // Calculated risk score (0-100)
+  ActionType recommended_action = 11;
+}
+
+// RiskSummary provides overall risk metrics
+message RiskSummary {
+  int32 overall_score = 1;      // Overall risk score (0-100)
+  int32 critical_count = 2;     // Number of critical findings
+  int32 high_count = 3;         // Number of high findings
+  int32 medium_count = 4;       // Number of medium findings
+  int32 low_count = 5;          // Number of low findings
+  int32 passed_count = 6;       // Number of passed checks
+  string risk_level = 7;        // "LOW", "MEDIUM", "HIGH", "CRITICAL"
+  string summary_text = 8;      // AI-generated summary text
+}
+
+// ActionItem represents a recommended action
+message ActionItem {
+  string action_id = 1;
+  ActionType action_type = 2;
+  Severity severity = 3;
+  string title = 4;
+  string description = 5;
+  string group_id = 6;          // Reference to finding group
+  TerraformFix terraform_fix = 7;  // Optional Terraform fix
+}
+
+// TerraformFix contains generated Terraform code
+message TerraformFix {
+  string resource_type = 1;     // e.g., "aws_s3_bucket_public_access_block"
+  string resource_name = 2;     // e.g., "prod_logs"
+  string code = 3;              // The Terraform HCL code
+  string explanation = 4;       // Why this fix is recommended
+}
