@@ -282,24 +282,31 @@ class SummarizationServicer(summarization_pb2_grpc.SummarizationServiceServicer)
         action_items = []
 
         total_groups = len(grouped)
-        logger.info(f"Processing {total_groups} finding groups...")
+        logger.info(f"Processing {total_groups} finding groups with parallelism=3...")
 
-        for i, (group_key, group_findings) in enumerate(grouped.items(), 1):
-            logger.info(f"Processing group {i}/{total_groups}: {group_key}")
+        with futures.ThreadPoolExecutor(max_workers=3) as executor:
+            future_to_group = {
+                executor.submit(
+                    self._process_group,
+                    key,
+                    findings,
+                    account_id,
+                    include_remediation,
+                    i,
+                    total_groups,
+                ): key
+                for i, (key, findings) in enumerate(grouped.items(), 1)
+            }
 
-            group = self._create_finding_group(group_key, group_findings, account_id)
-            finding_groups.append(group)
-
-            # Generate action items with remediation commands for failed findings
-            failed_findings = [
-                f
-                for f in group_findings
-                if f.status == summarization_pb2.FINDING_STATUS_FAIL
-            ]
-            if failed_findings and include_remediation:
-                logger.info(f"Generating remediation for group {i}/{total_groups}...")
-                action = self._create_action_item(group, account_id, failed_findings)
-                action_items.append(action)
+            for future in futures.as_completed(future_to_group):
+                key = future_to_group[future]
+                try:
+                    group, action = future.result()
+                    finding_groups.append(group)
+                    if action:
+                        action_items.append(action)
+                except Exception as e:
+                    logger.error(f"Error processing group {key}: {e}")
 
         logger.info("Finished processing all groups.")
 
@@ -312,6 +319,33 @@ class SummarizationServicer(summarization_pb2_grpc.SummarizationServiceServicer)
             risk_summary=risk_summary,
             action_items=action_items,
         )
+
+    def _process_group(
+        self,
+        group_key: str,
+        group_findings: list[summarization_pb2.Finding],
+        account_id: str,
+        include_remediation: bool,
+        index: int,
+        total: int,
+    ) -> tuple[summarization_pb2.FindingGroup, summarization_pb2.ActionItem | None]:
+        """Process a single finding group (summary + remediation)."""
+        logger.info(f"Processing group {index}/{total}: {group_key}")
+
+        group = self._create_finding_group(group_key, group_findings, account_id)
+
+        action = None
+        # Generate action items with remediation commands for failed findings
+        failed_findings = [
+            f
+            for f in group_findings
+            if f.status == summarization_pb2.FINDING_STATUS_FAIL
+        ]
+        if failed_findings and include_remediation:
+            logger.info(f"Generating remediation for group {index}/{total}...")
+            action = self._create_action_item(group, account_id, failed_findings)
+
+        return group, action
 
     def StreamSummarizeFindings(
         self,
