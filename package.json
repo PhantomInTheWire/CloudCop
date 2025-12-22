@@ -17,8 +17,8 @@
         "neo4j:shell": "docker compose -f infra/docker-compose.yml exec neo4j cypher-shell -u neo4j -p ${NEO4J_PASSWORD:-neo4j_dev}"
     },
     "devDependencies": {
-        "@commitlint/cli": "^18.4.3",
-        "@commitlint/config-conventional": "^18.4.3"
+        "@commitlint/cli": "^19.5.0",
+        "@commitlint/config-conventional": "^19.5.0"
     },
     "engines": {
         "node": ">=20.0.0"
