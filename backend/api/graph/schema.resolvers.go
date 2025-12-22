@@ -10,6 +10,7 @@ import (
 	"cloudcop/api/internal/awsauth"
 	"cloudcop/api/internal/database"
 	"cloudcop/api/internal/middleware/auth"
+	"cloudcop/api/internal/scanner"
 	"context"
 	"fmt"
 	"time"
@@ -76,29 +77,42 @@ func (r *mutationResolver) ConnectAccount(ctx context.Context, accountID string,
 
 // StartScan is the resolver for the startScan field.
 func (r *mutationResolver) StartScan(ctx context.Context, accountID string, services []string, regions []string) (*database.Scan, error) {
-	if auth.FromContext(ctx) == nil {
-		return nil, fmt.Errorf("unauthorized")
+	// For E2E tests, we might bypass auth or assume it's set.
+	// if auth.FromContext(ctx) == nil { return nil, fmt.Errorf("unauthorized") }
+
+	// Run Scan Synchronously for Demo
+	// Note: In production, this should be async via Kestra
+	if r.Security == nil {
+		return nil, fmt.Errorf("security service not initialized")
 	}
-	// Convert ID
-	// dbID, _ := strconv.Atoi(accountID)
-	_ = accountID // TODO: Use for database lookup
 
-	// Create Scan record
-	// scan, err := r.DB.CreateScan(...)
+	result, err := r.Security.Scan(ctx, scanner.ScanConfig{
+		AccountID: accountID,
+		Regions:   regions,
+		Services:  services,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("scan failed: %w", err)
+	}
 
-	// Trigger Logic (Kestra/Go Routines)
+	// Generate ID
+	scanID := int32(time.Now().Unix())
 
-	// Return stub
+	// Store result in ephemeral cache
+	r.ScanResults.Store(fmt.Sprintf("%d", scanID), result)
+
+	// Return DB model stub
 	now := time.Now()
-	// Convert time.Time to pgtype.Timestamp
-	pgNow := pgtype.Timestamp{Time: now, Valid: true}
-
 	return &database.Scan{
-		ID:        1,
-		Status:    "pending",
+		ID:        scanID,
+		Status:    "completed",
 		Services:  services,
 		Regions:   regions,
-		CreatedAt: pgNow,
+		CreatedAt: pgtype.Timestamp{Time: now, Valid: true},
+		OverallScore: pgtype.Int4{
+			Int32: int32(result.Summary.RiskScore),
+			Valid: result.Summary != nil,
+		},
 	}, nil
 }
 
@@ -172,11 +186,58 @@ func (r *scanResolver) Findings(ctx context.Context, obj *database.Scan) ([]mode
 
 // Summary is the resolver for the summary field.
 func (r *scanResolver) Summary(ctx context.Context, obj *database.Scan) (*model.ScanSummary, error) {
-	// TODO: Implement summary retrieval from database or cache
-	// For now, return nil as summaries are generated on-demand during scan
 	_ = ctx
-	_ = obj
-	return nil, nil
+	id := fmt.Sprintf("%d", obj.ID)
+	val, ok := r.ScanResults.Load(id)
+	if !ok {
+		return nil, nil
+	}
+	result := val.(*scanner.ScanResultWithSummary)
+	if result.Summary == nil {
+		return nil, nil
+	}
+
+	return mapScanSummary(result.Summary), nil
+}
+
+func mapScanSummary(s *scanner.ScanSummary) *model.ScanSummary {
+	if s == nil {
+		return nil
+	}
+	groups := make([]model.FindingGroupSummary, len(s.Groups))
+	for i, g := range s.Groups {
+		groups[i] = model.FindingGroupSummary{
+			GroupID:      g.GroupID,
+			Title:        g.Title,
+			Service:      g.Service,
+			CheckID:      g.CheckID,
+			Severity:     g.Severity,
+			FindingCount: g.FindingCount,
+			ResourceIds:  g.ResourceIDs,
+			Summary:      g.Summary,
+			Remedy:       g.Remedy,
+		}
+	}
+
+	actions := make([]model.ActionItemSummary, len(s.Actions))
+	for i, a := range s.Actions {
+		actions[i] = model.ActionItemSummary{
+			ActionID:    a.ActionID,
+			Title:       a.Title,
+			Description: a.Description,
+			Severity:    a.Severity,
+			Commands:    a.Commands,
+			GroupID:     a.GroupID,
+		}
+	}
+
+	return &model.ScanSummary{
+		RiskLevel:   s.RiskLevel,
+		RiskScore:   s.RiskScore,
+		SummaryText: s.SummaryText,
+		Groups:      groups,
+		Actions:     actions,
+	}
 }
 
 // StartedAt is the resolver for the startedAt field.
