@@ -62,6 +62,15 @@ type ComplexityRoot struct {
 		Verified       func(childComplexity int) int
 	}
 
+	ActionItemSummary struct {
+		ActionID    func(childComplexity int) int
+		Commands    func(childComplexity int) int
+		Description func(childComplexity int) int
+		GroupID     func(childComplexity int) int
+		Severity    func(childComplexity int) int
+		Title       func(childComplexity int) int
+	}
+
 	Finding struct {
 		CheckID     func(childComplexity int) int
 		Compliance  func(childComplexity int) int
@@ -72,6 +81,18 @@ type ComplexityRoot struct {
 		Service     func(childComplexity int) int
 		Severity    func(childComplexity int) int
 		Title       func(childComplexity int) int
+	}
+
+	FindingGroupSummary struct {
+		CheckID      func(childComplexity int) int
+		FindingCount func(childComplexity int) int
+		GroupID      func(childComplexity int) int
+		Remedy       func(childComplexity int) int
+		ResourceIds  func(childComplexity int) int
+		Service      func(childComplexity int) int
+		Severity     func(childComplexity int) int
+		Summary      func(childComplexity int) int
+		Title        func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -96,6 +117,15 @@ type ComplexityRoot struct {
 		Services     func(childComplexity int) int
 		StartedAt    func(childComplexity int) int
 		Status       func(childComplexity int) int
+		Summary      func(childComplexity int) int
+	}
+
+	ScanSummary struct {
+		Actions     func(childComplexity int) int
+		Groups      func(childComplexity int) int
+		RiskLevel   func(childComplexity int) int
+		RiskScore   func(childComplexity int) int
+		SummaryText func(childComplexity int) int
 	}
 
 	Team struct {
@@ -134,6 +164,7 @@ type ScanResolver interface {
 
 	OverallScore(ctx context.Context, obj *database.Scan) (*int, error)
 	Findings(ctx context.Context, obj *database.Scan) ([]model.Finding, error)
+	Summary(ctx context.Context, obj *database.Scan) (*model.ScanSummary, error)
 	StartedAt(ctx context.Context, obj *database.Scan) (*string, error)
 	CompletedAt(ctx context.Context, obj *database.Scan) (*string, error)
 	CreatedAt(ctx context.Context, obj *database.Scan) (string, error)
@@ -214,6 +245,43 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.AWSAccount.Verified(childComplexity), true
 
+	case "ActionItemSummary.actionId":
+		if e.complexity.ActionItemSummary.ActionID == nil {
+			break
+		}
+
+		return e.complexity.ActionItemSummary.ActionID(childComplexity), true
+	case "ActionItemSummary.commands":
+		if e.complexity.ActionItemSummary.Commands == nil {
+			break
+		}
+
+		return e.complexity.ActionItemSummary.Commands(childComplexity), true
+	case "ActionItemSummary.description":
+		if e.complexity.ActionItemSummary.Description == nil {
+			break
+		}
+
+		return e.complexity.ActionItemSummary.Description(childComplexity), true
+	case "ActionItemSummary.groupId":
+		if e.complexity.ActionItemSummary.GroupID == nil {
+			break
+		}
+
+		return e.complexity.ActionItemSummary.GroupID(childComplexity), true
+	case "ActionItemSummary.severity":
+		if e.complexity.ActionItemSummary.Severity == nil {
+			break
+		}
+
+		return e.complexity.ActionItemSummary.Severity(childComplexity), true
+	case "ActionItemSummary.title":
+		if e.complexity.ActionItemSummary.Title == nil {
+			break
+		}
+
+		return e.complexity.ActionItemSummary.Title(childComplexity), true
+
 	case "Finding.checkId":
 		if e.complexity.Finding.CheckID == nil {
 			break
@@ -268,6 +336,61 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Finding.Title(childComplexity), true
+
+	case "FindingGroupSummary.checkId":
+		if e.complexity.FindingGroupSummary.CheckID == nil {
+			break
+		}
+
+		return e.complexity.FindingGroupSummary.CheckID(childComplexity), true
+	case "FindingGroupSummary.findingCount":
+		if e.complexity.FindingGroupSummary.FindingCount == nil {
+			break
+		}
+
+		return e.complexity.FindingGroupSummary.FindingCount(childComplexity), true
+	case "FindingGroupSummary.groupId":
+		if e.complexity.FindingGroupSummary.GroupID == nil {
+			break
+		}
+
+		return e.complexity.FindingGroupSummary.GroupID(childComplexity), true
+	case "FindingGroupSummary.remedy":
+		if e.complexity.FindingGroupSummary.Remedy == nil {
+			break
+		}
+
+		return e.complexity.FindingGroupSummary.Remedy(childComplexity), true
+	case "FindingGroupSummary.resourceIds":
+		if e.complexity.FindingGroupSummary.ResourceIds == nil {
+			break
+		}
+
+		return e.complexity.FindingGroupSummary.ResourceIds(childComplexity), true
+	case "FindingGroupSummary.service":
+		if e.complexity.FindingGroupSummary.Service == nil {
+			break
+		}
+
+		return e.complexity.FindingGroupSummary.Service(childComplexity), true
+	case "FindingGroupSummary.severity":
+		if e.complexity.FindingGroupSummary.Severity == nil {
+			break
+		}
+
+		return e.complexity.FindingGroupSummary.Severity(childComplexity), true
+	case "FindingGroupSummary.summary":
+		if e.complexity.FindingGroupSummary.Summary == nil {
+			break
+		}
+
+		return e.complexity.FindingGroupSummary.Summary(childComplexity), true
+	case "FindingGroupSummary.title":
+		if e.complexity.FindingGroupSummary.Title == nil {
+			break
+		}
+
+		return e.complexity.FindingGroupSummary.Title(childComplexity), true
 
 	case "Mutation.connectAccount":
 		if e.complexity.Mutation.ConnectAccount == nil {
@@ -381,6 +504,43 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Scan.Status(childComplexity), true
+	case "Scan.summary":
+		if e.complexity.Scan.Summary == nil {
+			break
+		}
+
+		return e.complexity.Scan.Summary(childComplexity), true
+
+	case "ScanSummary.actions":
+		if e.complexity.ScanSummary.Actions == nil {
+			break
+		}
+
+		return e.complexity.ScanSummary.Actions(childComplexity), true
+	case "ScanSummary.groups":
+		if e.complexity.ScanSummary.Groups == nil {
+			break
+		}
+
+		return e.complexity.ScanSummary.Groups(childComplexity), true
+	case "ScanSummary.riskLevel":
+		if e.complexity.ScanSummary.RiskLevel == nil {
+			break
+		}
+
+		return e.complexity.ScanSummary.RiskLevel(childComplexity), true
+	case "ScanSummary.riskScore":
+		if e.complexity.ScanSummary.RiskScore == nil {
+			break
+		}
+
+		return e.complexity.ScanSummary.RiskScore(childComplexity), true
+	case "ScanSummary.summaryText":
+		if e.complexity.ScanSummary.SummaryText == nil {
+			break
+		}
+
+		return e.complexity.ScanSummary.SummaryText(childComplexity), true
 
 	case "Team.awsAccounts":
 		if e.complexity.Team.AWSAccounts == nil {
@@ -916,6 +1076,8 @@ func (ec *executionContext) fieldContext_AWSAccount_scans(_ context.Context, fie
 				return ec.fieldContext_Scan_overallScore(ctx, field)
 			case "findings":
 				return ec.fieldContext_Scan_findings(ctx, field)
+			case "summary":
+				return ec.fieldContext_Scan_summary(ctx, field)
 			case "startedAt":
 				return ec.fieldContext_Scan_startedAt(ctx, field)
 			case "completedAt":
@@ -924,6 +1086,180 @@ func (ec *executionContext) fieldContext_AWSAccount_scans(_ context.Context, fie
 				return ec.fieldContext_Scan_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Scan", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionItemSummary_actionId(ctx context.Context, field graphql.CollectedField, obj *model.ActionItemSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ActionItemSummary_actionId,
+		func(ctx context.Context) (any, error) {
+			return obj.ActionID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ActionItemSummary_actionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionItemSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionItemSummary_title(ctx context.Context, field graphql.CollectedField, obj *model.ActionItemSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ActionItemSummary_title,
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ActionItemSummary_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionItemSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionItemSummary_description(ctx context.Context, field graphql.CollectedField, obj *model.ActionItemSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ActionItemSummary_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ActionItemSummary_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionItemSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionItemSummary_severity(ctx context.Context, field graphql.CollectedField, obj *model.ActionItemSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ActionItemSummary_severity,
+		func(ctx context.Context) (any, error) {
+			return obj.Severity, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ActionItemSummary_severity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionItemSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionItemSummary_commands(ctx context.Context, field graphql.CollectedField, obj *model.ActionItemSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ActionItemSummary_commands,
+		func(ctx context.Context) (any, error) {
+			return obj.Commands, nil
+		},
+		nil,
+		ec.marshalNString2ᚕstringᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ActionItemSummary_commands(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionItemSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionItemSummary_groupId(ctx context.Context, field graphql.CollectedField, obj *model.ActionItemSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ActionItemSummary_groupId,
+		func(ctx context.Context) (any, error) {
+			return obj.GroupID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ActionItemSummary_groupId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionItemSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1190,6 +1526,267 @@ func (ec *executionContext) fieldContext_Finding_compliance(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _FindingGroupSummary_groupId(ctx context.Context, field graphql.CollectedField, obj *model.FindingGroupSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FindingGroupSummary_groupId,
+		func(ctx context.Context) (any, error) {
+			return obj.GroupID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FindingGroupSummary_groupId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FindingGroupSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FindingGroupSummary_title(ctx context.Context, field graphql.CollectedField, obj *model.FindingGroupSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FindingGroupSummary_title,
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FindingGroupSummary_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FindingGroupSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FindingGroupSummary_service(ctx context.Context, field graphql.CollectedField, obj *model.FindingGroupSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FindingGroupSummary_service,
+		func(ctx context.Context) (any, error) {
+			return obj.Service, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FindingGroupSummary_service(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FindingGroupSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FindingGroupSummary_checkId(ctx context.Context, field graphql.CollectedField, obj *model.FindingGroupSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FindingGroupSummary_checkId,
+		func(ctx context.Context) (any, error) {
+			return obj.CheckID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FindingGroupSummary_checkId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FindingGroupSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FindingGroupSummary_severity(ctx context.Context, field graphql.CollectedField, obj *model.FindingGroupSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FindingGroupSummary_severity,
+		func(ctx context.Context) (any, error) {
+			return obj.Severity, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FindingGroupSummary_severity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FindingGroupSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FindingGroupSummary_findingCount(ctx context.Context, field graphql.CollectedField, obj *model.FindingGroupSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FindingGroupSummary_findingCount,
+		func(ctx context.Context) (any, error) {
+			return obj.FindingCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FindingGroupSummary_findingCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FindingGroupSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FindingGroupSummary_resourceIds(ctx context.Context, field graphql.CollectedField, obj *model.FindingGroupSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FindingGroupSummary_resourceIds,
+		func(ctx context.Context) (any, error) {
+			return obj.ResourceIds, nil
+		},
+		nil,
+		ec.marshalNString2ᚕstringᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FindingGroupSummary_resourceIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FindingGroupSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FindingGroupSummary_summary(ctx context.Context, field graphql.CollectedField, obj *model.FindingGroupSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FindingGroupSummary_summary,
+		func(ctx context.Context) (any, error) {
+			return obj.Summary, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FindingGroupSummary_summary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FindingGroupSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FindingGroupSummary_remedy(ctx context.Context, field graphql.CollectedField, obj *model.FindingGroupSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FindingGroupSummary_remedy,
+		func(ctx context.Context) (any, error) {
+			return obj.Remedy, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FindingGroupSummary_remedy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FindingGroupSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_verifyAwsAccount(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1341,6 +1938,8 @@ func (ec *executionContext) fieldContext_Mutation_startScan(ctx context.Context,
 				return ec.fieldContext_Scan_overallScore(ctx, field)
 			case "findings":
 				return ec.fieldContext_Scan_findings(ctx, field)
+			case "summary":
+				return ec.fieldContext_Scan_summary(ctx, field)
 			case "startedAt":
 				return ec.fieldContext_Scan_startedAt(ctx, field)
 			case "completedAt":
@@ -1804,6 +2403,47 @@ func (ec *executionContext) fieldContext_Scan_findings(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Scan_summary(ctx context.Context, field graphql.CollectedField, obj *database.Scan) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Scan_summary,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Scan().Summary(ctx, obj)
+		},
+		nil,
+		ec.marshalOScanSummary2ᚖcloudcopᚋapiᚋgraphᚋmodelᚐScanSummary,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Scan_summary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Scan",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "riskLevel":
+				return ec.fieldContext_ScanSummary_riskLevel(ctx, field)
+			case "riskScore":
+				return ec.fieldContext_ScanSummary_riskScore(ctx, field)
+			case "summaryText":
+				return ec.fieldContext_ScanSummary_summaryText(ctx, field)
+			case "groups":
+				return ec.fieldContext_ScanSummary_groups(ctx, field)
+			case "actions":
+				return ec.fieldContext_ScanSummary_actions(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ScanSummary", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Scan_startedAt(ctx context.Context, field graphql.CollectedField, obj *database.Scan) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1886,6 +2526,185 @@ func (ec *executionContext) fieldContext_Scan_createdAt(_ context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ScanSummary_riskLevel(ctx context.Context, field graphql.CollectedField, obj *model.ScanSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ScanSummary_riskLevel,
+		func(ctx context.Context) (any, error) {
+			return obj.RiskLevel, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ScanSummary_riskLevel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ScanSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ScanSummary_riskScore(ctx context.Context, field graphql.CollectedField, obj *model.ScanSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ScanSummary_riskScore,
+		func(ctx context.Context) (any, error) {
+			return obj.RiskScore, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ScanSummary_riskScore(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ScanSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ScanSummary_summaryText(ctx context.Context, field graphql.CollectedField, obj *model.ScanSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ScanSummary_summaryText,
+		func(ctx context.Context) (any, error) {
+			return obj.SummaryText, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ScanSummary_summaryText(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ScanSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ScanSummary_groups(ctx context.Context, field graphql.CollectedField, obj *model.ScanSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ScanSummary_groups,
+		func(ctx context.Context) (any, error) {
+			return obj.Groups, nil
+		},
+		nil,
+		ec.marshalNFindingGroupSummary2ᚕcloudcopᚋapiᚋgraphᚋmodelᚐFindingGroupSummaryᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ScanSummary_groups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ScanSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "groupId":
+				return ec.fieldContext_FindingGroupSummary_groupId(ctx, field)
+			case "title":
+				return ec.fieldContext_FindingGroupSummary_title(ctx, field)
+			case "service":
+				return ec.fieldContext_FindingGroupSummary_service(ctx, field)
+			case "checkId":
+				return ec.fieldContext_FindingGroupSummary_checkId(ctx, field)
+			case "severity":
+				return ec.fieldContext_FindingGroupSummary_severity(ctx, field)
+			case "findingCount":
+				return ec.fieldContext_FindingGroupSummary_findingCount(ctx, field)
+			case "resourceIds":
+				return ec.fieldContext_FindingGroupSummary_resourceIds(ctx, field)
+			case "summary":
+				return ec.fieldContext_FindingGroupSummary_summary(ctx, field)
+			case "remedy":
+				return ec.fieldContext_FindingGroupSummary_remedy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type FindingGroupSummary", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ScanSummary_actions(ctx context.Context, field graphql.CollectedField, obj *model.ScanSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ScanSummary_actions,
+		func(ctx context.Context) (any, error) {
+			return obj.Actions, nil
+		},
+		nil,
+		ec.marshalNActionItemSummary2ᚕcloudcopᚋapiᚋgraphᚋmodelᚐActionItemSummaryᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ScanSummary_actions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ScanSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "actionId":
+				return ec.fieldContext_ActionItemSummary_actionId(ctx, field)
+			case "title":
+				return ec.fieldContext_ActionItemSummary_title(ctx, field)
+			case "description":
+				return ec.fieldContext_ActionItemSummary_description(ctx, field)
+			case "severity":
+				return ec.fieldContext_ActionItemSummary_severity(ctx, field)
+			case "commands":
+				return ec.fieldContext_ActionItemSummary_commands(ctx, field)
+			case "groupId":
+				return ec.fieldContext_ActionItemSummary_groupId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ActionItemSummary", field.Name)
 		},
 	}
 	return fc, nil
@@ -3768,6 +4587,70 @@ func (ec *executionContext) _AWSAccount(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var actionItemSummaryImplementors = []string{"ActionItemSummary"}
+
+func (ec *executionContext) _ActionItemSummary(ctx context.Context, sel ast.SelectionSet, obj *model.ActionItemSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, actionItemSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ActionItemSummary")
+		case "actionId":
+			out.Values[i] = ec._ActionItemSummary_actionId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._ActionItemSummary_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._ActionItemSummary_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "severity":
+			out.Values[i] = ec._ActionItemSummary_severity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "commands":
+			out.Values[i] = ec._ActionItemSummary_commands(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "groupId":
+			out.Values[i] = ec._ActionItemSummary_groupId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var findingImplementors = []string{"Finding"}
 
 func (ec *executionContext) _Finding(ctx context.Context, sel ast.SelectionSet, obj *model.Finding) graphql.Marshaler {
@@ -3821,6 +4704,85 @@ func (ec *executionContext) _Finding(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "compliance":
 			out.Values[i] = ec._Finding_compliance(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var findingGroupSummaryImplementors = []string{"FindingGroupSummary"}
+
+func (ec *executionContext) _FindingGroupSummary(ctx context.Context, sel ast.SelectionSet, obj *model.FindingGroupSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, findingGroupSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FindingGroupSummary")
+		case "groupId":
+			out.Values[i] = ec._FindingGroupSummary_groupId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._FindingGroupSummary_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "service":
+			out.Values[i] = ec._FindingGroupSummary_service(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "checkId":
+			out.Values[i] = ec._FindingGroupSummary_checkId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "severity":
+			out.Values[i] = ec._FindingGroupSummary_severity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "findingCount":
+			out.Values[i] = ec._FindingGroupSummary_findingCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resourceIds":
+			out.Values[i] = ec._FindingGroupSummary_resourceIds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "summary":
+			out.Values[i] = ec._FindingGroupSummary_summary(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "remedy":
+			out.Values[i] = ec._FindingGroupSummary_remedy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4142,6 +5104,39 @@ func (ec *executionContext) _Scan(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "summary":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Scan_summary(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "startedAt":
 			field := field
 
@@ -4244,6 +5239,65 @@ func (ec *executionContext) _Scan(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var scanSummaryImplementors = []string{"ScanSummary"}
+
+func (ec *executionContext) _ScanSummary(ctx context.Context, sel ast.SelectionSet, obj *model.ScanSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, scanSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ScanSummary")
+		case "riskLevel":
+			out.Values[i] = ec._ScanSummary_riskLevel(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "riskScore":
+			out.Values[i] = ec._ScanSummary_riskScore(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "summaryText":
+			out.Values[i] = ec._ScanSummary_summaryText(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "groups":
+			out.Values[i] = ec._ScanSummary_groups(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "actions":
+			out.Values[i] = ec._ScanSummary_actions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4991,6 +6045,54 @@ func (ec *executionContext) marshalNAWSAccount2ᚖcloudcopᚋapiᚋgraphᚋmodel
 	return ec._AWSAccount(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNActionItemSummary2cloudcopᚋapiᚋgraphᚋmodelᚐActionItemSummary(ctx context.Context, sel ast.SelectionSet, v model.ActionItemSummary) graphql.Marshaler {
+	return ec._ActionItemSummary(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNActionItemSummary2ᚕcloudcopᚋapiᚋgraphᚋmodelᚐActionItemSummaryᚄ(ctx context.Context, sel ast.SelectionSet, v []model.ActionItemSummary) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNActionItemSummary2cloudcopᚋapiᚋgraphᚋmodelᚐActionItemSummary(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5011,6 +6113,54 @@ func (ec *executionContext) marshalNFinding2cloudcopᚋapiᚋgraphᚋmodelᚐFin
 	return ec._Finding(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNFindingGroupSummary2cloudcopᚋapiᚋgraphᚋmodelᚐFindingGroupSummary(ctx context.Context, sel ast.SelectionSet, v model.FindingGroupSummary) graphql.Marshaler {
+	return ec._FindingGroupSummary(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNFindingGroupSummary2ᚕcloudcopᚋapiᚋgraphᚋmodelᚐFindingGroupSummaryᚄ(ctx context.Context, sel ast.SelectionSet, v []model.FindingGroupSummary) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNFindingGroupSummary2cloudcopᚋapiᚋgraphᚋmodelᚐFindingGroupSummary(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5019,6 +6169,22 @@ func (ec *executionContext) unmarshalNID2string(ctx context.Context, v any) (str
 func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -5055,6 +6221,36 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNTeam2cloudcopᚋapiᚋinternalᚋdatabaseᚐTeam(ctx context.Context, sel ast.SelectionSet, v database.Team) graphql.Marshaler {
@@ -5519,6 +6715,13 @@ func (ec *executionContext) marshalOScan2ᚕcloudcopᚋapiᚋinternalᚋdatabase
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalOScanSummary2ᚖcloudcopᚋapiᚋgraphᚋmodelᚐScanSummary(ctx context.Context, sel ast.SelectionSet, v *model.ScanSummary) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ScanSummary(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
