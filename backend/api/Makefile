@@ -48,7 +48,7 @@ e2e-ai-demo:
 	@./e2e/setup-misconfigs.sh
 	@echo "=== 3. Running E2E Test with AI Summarization (Direct & GraphQL) ==="
 	@echo "Look for 'Risk Score', 'Summary Text', and 'Commands' in the output below:"
-	go test -v -timeout 10m -run "TestSecurityService_E2E|TestGraphQL_StartScan_E2E" ./e2e/...
+	go test -v -count=1 -timeout 10m -run "TestSecurityService_E2E|TestGraphQL_StartScan_E2E" ./e2e/...
 
 # Stop the AI Demo Infrastructure
 e2e-ai-down:
