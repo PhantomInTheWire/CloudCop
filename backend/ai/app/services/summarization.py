@@ -29,8 +29,9 @@ class LLMClient:
         self.models = [primary_model]
 
         # Add fallback/alternative models for rotation
+        # Including openai and google free models as requested
         alternatives = [
-            "moonshotai/moonshot-v1-8k:free",
+            "moonshotai/kimi-k2:free",
             "openai/gpt-oss-120b:free",
             "google/gemini-2.0-flash-exp:free",
         ]
@@ -284,9 +285,9 @@ class SummarizationServicer(summarization_pb2_grpc.SummarizationServiceServicer)
         action_items = []
 
         total_groups = len(grouped)
-        logger.info(f"Processing {total_groups} finding groups with parallelism=8...")
+        logger.info(f"Processing {total_groups} finding groups with parallelism=2...")
 
-        with futures.ThreadPoolExecutor(max_workers=8) as executor:
+        with futures.ThreadPoolExecutor(max_workers=2) as executor:
             future_to_group = {
                 executor.submit(
                     self._process_group,
