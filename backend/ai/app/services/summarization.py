@@ -3,6 +3,8 @@
 import json
 import logging
 import os
+import random
+import time
 from collections import defaultdict
 from concurrent import futures
 from typing import Any
@@ -21,14 +23,67 @@ class LLMClient:
     def __init__(self) -> None:
         self.api_key = os.getenv("OPENAI_API_KEY", "")
         self.base_url = os.getenv("OPENAI_BASE_URL", "https://openrouter.ai/api/v1")
-        self.model = os.getenv("OPENAI_MODEL", "z-ai/glm-4.5-air:free")
+
+        # Primary model from env, plus fallback
+        primary_model = os.getenv("OPENAI_MODEL", "z-ai/glm-4.5-air:free")
+        self.models = [primary_model]
+
+        # Add fallback/alternative model for rotation
+        secondary_model = "moonshotai/moonshot-v1-8k:free"
+        if secondary_model != primary_model:
+            self.models.append(secondary_model)
 
         if not self.api_key:
             logger.warning("OPENAI_API_KEY not set, LLM features will be disabled")
             self.client = None
         else:
             self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
-            logger.info(f"LLM client initialized with model: {self.model}")
+            logger.info(f"LLM client initialized with models: {self.models}")
+
+    def _call_llm(
+        self, messages: list[dict], temperature: float, max_tokens: int
+    ) -> Any:
+        """Call LLM with exponential backoff and model rotation."""
+        max_retries = 6
+        base_delay = 2.0
+
+        if not self.client:
+            raise ValueError("LLM client not initialized")
+
+        for attempt in range(max_retries):
+            # Rotate models: try primary, then secondary, etc.
+            model = self.models[attempt % len(self.models)]
+
+            try:
+                return self.client.chat.completions.create(
+                    model=model,
+                    messages=messages,  # type: ignore
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
+            except Exception as e:
+                error_msg = str(e)
+                is_rate_limit = "429" in error_msg
+
+                if attempt < max_retries - 1:
+                    # Exponential backoff: 2, 4, 8, 16, 32...
+                    delay = base_delay * (2**attempt) + random.uniform(0, 1)  # nosec
+
+                    if is_rate_limit:
+                        logger.warning(
+                            f"Rate limit (429) on {model}. "
+                            f"Switching model. Retrying in {delay:.2f}s..."
+                        )
+                    else:
+                        logger.warning(
+                            f"LLM error on {model}: {e}. Retrying in {delay:.2f}s..."
+                        )
+
+                    time.sleep(delay)
+                    continue
+
+                logger.error(f"LLM call failed after {max_retries} attempts: {e}")
+                raise e
 
     def summarize_issues(
         self,
@@ -66,8 +121,7 @@ Respond in JSON format:
 {{"summary": "...", "remedy": "..."}}"""
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
+            response = self._call_llm(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
@@ -136,8 +190,7 @@ Important:
 - Include comments as separate strings if needed"""
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
+            response = self._call_llm(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
