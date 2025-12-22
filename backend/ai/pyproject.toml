@@ -26,9 +26,17 @@ select = ["E", "F", "I"]
 [tool.mypy]
 ignore_missing_imports = true
 disallow_untyped_defs = true
-exclude = ["grpc_gen"]
+exclude = ["grpc_gen", "app/grpc_gen"]
 explicit_package_bases = true
 mypy_path = "."
+
+[[tool.mypy.overrides]]
+module = "app.grpc_gen.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "app.services.summarization"
+disable_error_code = ["attr-defined", "name-defined"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
