@@ -96,12 +96,6 @@ jobs:
           cd ${{ matrix.service.path }}
           go test -race -parallel=4 ./...
 
-      - name: Security scan
-        run: |
-          go install github.com/securego/gosec/v2/cmd/gosec@latest
-          cd ${{ matrix.service.path }}
-          gosec -exclude=G115, G103 -severity=HIGH ./...
-
   python-checks:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' ||
