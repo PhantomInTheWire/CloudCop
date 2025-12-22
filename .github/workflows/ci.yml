@@ -25,13 +25,18 @@ jobs:
         with:
           node-version: 20
 
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
       - name: Install commitlint
         run: |
-          npm install -g @commitlint/cli @commitlint/config-conventional
+          bun add -g @commitlint/cli @commitlint/config-conventional
 
       - name: Validate PR commits
         run: |
-          npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+          bunx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
   go-checks:
     runs-on: ubuntu-latest
@@ -147,29 +152,29 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: 20
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          bun-version: latest
+          cache: "bun"
+          cache-dependency-path: frontend/bun.lock
 
       - name: Frontend lint and format
         run: |
           cd frontend
-          npm ci
-          npm run lint
-          npm run format:check
+          bun install
+          bun run lint
+          bun run format:check
 
       - name: Frontend tests
         run: |
           cd frontend
-          npm run test
+          bun run test
 
       - name: Security scan (Frontend)
         run: |
           cd frontend
-          npm audit --omit=dev || true
+          bun audit --omit=dev || true
 
   docker-build:
     runs-on: ubuntu-latest
