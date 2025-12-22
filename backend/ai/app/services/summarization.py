@@ -31,7 +31,7 @@ class LLMClient:
         # Add fallback/alternative models for rotation
         # Including openai and google free models as requested
         alternatives = [
-            "moonshotai/kimi-k2:free",
+            "meta-llama/llama-3.1-405b-instruct:free",
             "openai/gpt-oss-120b:free",
             "google/gemini-2.0-flash-exp:free",
         ]
