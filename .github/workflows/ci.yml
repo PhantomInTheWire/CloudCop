@@ -4,7 +4,10 @@ on:
   push:
     branches: [master, dev]
   pull_request:
-    branches: [master, dev]
+    paths:
+      - backend/**
+      - frontend/**
+      - .github/**
 
 jobs:
   commitlint:
@@ -32,34 +35,28 @@ jobs:
 
   go-checks:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'backend/api/') || contains(github.event.head_commit.modified, 'backend/worker/') || contains(github.event.head_commit.modified, '.github/') || github.event_name == 'pull_request'
-    services:
-      postgres:
-        image: postgres:15
-        ports: ["5432:5432"]
-        env:
-          POSTGRES_USER: guard
-          POSTGRES_PASSWORD: guard
-          POSTGRES_DB: guard
-        options: >-
-          --health-cmd "pg_isready -U guard"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    if: github.event_name == 'pull_request' ||
+        contains(github.event.head_commit.modified, 'backend/api/') ||
+        contains(github.event.head_commit.modified, 'backend/worker/') ||
+        contains(github.event.head_commit.modified, '.github/')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: api
+            path: backend/api
+            cmd: server
+          - name: worker
+            path: backend/worker
+            cmd: worker
+
+    env:
+      GOLANGCI_LINT_CACHE: ~/.cache/golangci-lint
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum', '**/go.mod') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -70,43 +67,46 @@ jobs:
             backend/api/go.sum
             backend/worker/go.sum
 
-      - name: Go mod tidy check
-        run: |
-          cd backend/api && go mod tidy
-          cd ../worker && go mod tidy
+      - name: Cache golangci-lint
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/golangci-lint
+          key: ${{ runner.os }}-golangci-${{ matrix.service.name }}
 
-      - name: Go lint (backend/api)
+      - name: Go mod tidy (verify)
+        run: |
+          cd ${{ matrix.service.path }}
+          go mod tidy
+          git diff --exit-code
+
+      - name: Go lint
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.6
-          working-directory: backend/api
+          working-directory: ${{ matrix.service.path }}
+          args: --timeout=5m
 
-      - name: Go lint (backend/worker)
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.6
-          working-directory: backend/worker
-
-      - name: Go build check
+      - name: Go build
         run: |
-          cd backend/api && go build ./cmd/server
-          cd ../worker && go build ./cmd/worker
+          cd ${{ matrix.service.path }}
+          go build ./cmd/${{ matrix.service.cmd }}
 
       - name: Go tests
         run: |
-          cd backend/api && go test ./...
-          cd ../worker && go test ./...
+          cd ${{ matrix.service.path }}
+          go test -race -parallel=4 ./...
 
-      - name: Security scan (Go)
+      - name: Security scan
         run: |
           go install github.com/securego/gosec/v2/cmd/gosec@latest
-
-          cd backend/api && gosec -exclude=G115 ./...
-          cd ../worker && gosec -exclude=G115 ./...
+          cd ${{ matrix.service.path }}
+          gosec -exclude=G115 -severity=HIGH ./...
 
   python-checks:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'backend/ai/') || contains(github.event.head_commit.modified, '.github/') || github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' ||
+        contains(github.event.head_commit.modified, 'backend/ai/') ||
+        contains(github.event.head_commit.modified, '.github/')
 
     steps:
       - name: Checkout repo
@@ -145,7 +145,9 @@ jobs:
 
   frontend-checks:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'frontend/') || contains(github.event.head_commit.modified, '.github/') || github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' ||
+        contains(github.event.head_commit.modified, 'frontend/') ||
+        contains(github.event.head_commit.modified, '.github/')
 
     steps:
       - name: Checkout repo
@@ -177,7 +179,10 @@ jobs:
 
   docker-build:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'backend/') || contains(github.event.head_commit.modified, 'frontend/') || contains(github.event.head_commit.modified, 'infra/docker-compose.yml') || github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' ||
+        contains(github.event.head_commit.modified, 'backend/') ||
+        contains(github.event.head_commit.modified, 'frontend/') ||
+        contains(github.event.head_commit.modified, 'infra/docker-compose.yml')
 
     steps:
       - name: Checkout repo
