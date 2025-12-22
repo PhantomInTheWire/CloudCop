@@ -101,14 +101,14 @@ repos:
       # Frontend checks
       - id: eslint-check
         name: eslint (frontend)
-        entry: bash -c 'cd frontend && npm run lint'
+        entry: bash -c 'cd frontend && bun run lint'
         language: system
         files: ^frontend/.*\.(ts|tsx|js|jsx)$
         pass_filenames: false
 
       - id: prettier-check
         name: prettier check (frontend)
-        entry: bash -c 'cd frontend && npm run format:check'
+        entry: bash -c 'cd frontend && bun run format:check'
         language: system
         files: ^frontend/.*\.(ts|tsx|js|jsx|json|css|md)$
         pass_filenames: false
@@ -124,7 +124,7 @@ repos:
       # Commitlint
       - id: commitlint
         name: commitlint
-        entry: bash -c 'npx --yes @commitlint/cli --edit $1'
+        entry: bunx commitlint --edit
         language: system
         stages: [commit-msg]
         always_run: true
