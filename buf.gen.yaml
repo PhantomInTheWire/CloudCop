@@ -1,0 +1,17 @@
+version: v2
+plugins:
+  # Go protobuf
+  - remote: buf.build/protocolbuffers/go
+    out: backend/api/internal/grpc
+    opt:
+      - paths=source_relative
+  # Go gRPC
+  - remote: buf.build/grpc/go
+    out: backend/api/internal/grpc
+    opt:
+      - paths=source_relative
+  # Python protobuf + gRPC
+  - remote: buf.build/protocolbuffers/python
+    out: backend/ai/app/grpc_gen
+  - remote: buf.build/grpc/python
+    out: backend/ai/app/grpc_gen
