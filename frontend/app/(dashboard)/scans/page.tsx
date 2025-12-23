@@ -1,7 +1,6 @@
 "use client";
 
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,7 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlayIcon } from "@phosphor-icons/react";
 import { ScanHistoryTable } from "./_components/scan-history-table";
 import { NewScanForm } from "./_components/new-scan-form";
 

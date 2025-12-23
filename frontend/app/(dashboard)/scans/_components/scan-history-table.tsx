@@ -16,7 +16,6 @@ import {
   CircleNotchIcon,
   XCircleIcon,
   ClockIcon,
-  ArrowRightIcon,
   EyeIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
