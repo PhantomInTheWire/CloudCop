@@ -78,24 +78,6 @@ We provide a comprehensive E2E test suite that runs against **LocalStack** (simu
    make e2e-ai-down
    ```
 
-### Running Components Individually
-
-- **Start Infrastructure**:
-  ```bash
-  npm run dev
-  ```
-- **Scanner Unit Tests**:
-  ```bash
-  cd backend/api
-  go test ./internal/scanner/...
-  ```
-- **GraphQL Playground**: Open http://localhost:8080/graphql after starting infrastructure.
-
-## Support
-
-
-For support, please open an issue in the standard GitHub issue tracker.
-
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
