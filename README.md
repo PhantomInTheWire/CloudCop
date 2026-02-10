@@ -77,7 +77,3 @@ We provide a comprehensive E2E test suite that runs against **LocalStack** (simu
    ```bash
    make e2e-ai-down
    ```
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
