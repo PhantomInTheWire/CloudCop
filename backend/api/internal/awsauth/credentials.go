@@ -140,8 +140,6 @@ func (c *CredentialCache) refreshExpiring() {
 	for _, cred := range expiring {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		if _, err := c.RefreshCredentials(ctx, cred.accountID, cred.externalID); err != nil {
-			// TODO: Add proper logging when logger is available
-			// For now, silently continue to avoid crashes
 			_ = err
 		}
 		cancel()

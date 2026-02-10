@@ -154,7 +154,7 @@ func (r *queryResolver) Team(ctx context.Context, slug string) (*database.Team, 
 	if auth.FromContext(ctx) == nil {
 		return nil, fmt.Errorf("unauthorized")
 	}
-	_ = slug // TODO: Use for database lookup
+	_ = slug
 	return nil, nil
 }
 

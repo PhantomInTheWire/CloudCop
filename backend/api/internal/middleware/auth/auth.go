@@ -57,13 +57,7 @@ func Middleware() gin.HandlerFunc {
 		}
 
 		clientKey := os.Getenv("CLERK_SECRET_KEY")
-		// if clientKey == "" {
-		// We don't want to panic here in case of misconfiguration in dev, just warn
-		// log.Println("WARNING: CLERK_SECRET_KEY is missing")
-		// }
 
-		// If no client available (no key), or no header, just finish
-		// Ideally we should block if key is present but header missing
 		if clientKey == "" {
 			c.Next()
 			return
@@ -78,7 +72,6 @@ func Middleware() gin.HandlerFunc {
 
 		header := r.Header.Get("Authorization")
 		if header == "" {
-			// Unauthenticated
 			c.Next()
 			return
 		}
@@ -128,7 +121,6 @@ func EmailFromContext(ctx context.Context) (string, error) {
 	if user == nil {
 		return "", fmt.Errorf("not logged in")
 	}
-	// Simplified email retrieval
 	if len(user.EmailAddresses) > 0 {
 		return user.EmailAddresses[0].EmailAddress, nil
 	}

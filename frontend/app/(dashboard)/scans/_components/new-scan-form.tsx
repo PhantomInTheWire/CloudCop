@@ -66,7 +66,6 @@ export function NewScanForm() {
 
   const handleStartScan = async () => {
     setIsScanning(true);
-    // TODO: Call GraphQL mutation to start scan
     console.log("Starting scan with:", {
       account: selectedAccount,
       services: selectedServices,

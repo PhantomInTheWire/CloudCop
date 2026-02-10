@@ -24,12 +24,9 @@ class LLMClient:
         self.api_key = os.getenv("OPENAI_API_KEY", "")
         self.base_url = os.getenv("OPENAI_BASE_URL", "https://openrouter.ai/api/v1")
 
-        # Primary model from env, plus fallback
         primary_model = os.getenv("OPENAI_MODEL", "z-ai/glm-4.5-air:free")
         self.models = [primary_model]
 
-        # Add fallback/alternative models for rotation
-        # Including openai and google free models as requested
         alternatives = [
             "meta-llama/llama-3.1-405b-instruct:free",
             "openai/gpt-oss-120b:free",
@@ -58,7 +55,6 @@ class LLMClient:
             raise ValueError("LLM client not initialized")
 
         for attempt in range(max_retries):
-            # Rotate models: try primary, then secondary, etc.
             model = self.models[attempt % len(self.models)]
 
             try:
@@ -139,9 +135,7 @@ Respond in JSON format:
             )
 
             content = response.choices[0].message.content or "{}"
-            # Try to parse JSON from response
             try:
-                # Handle markdown code blocks
                 if "```json" in content:
                     content = content.split("```json")[1].split("```")[0]
                 elif "```" in content:
@@ -209,7 +203,6 @@ Important:
 
             content = response.choices[0].message.content or "{}"
             try:
-                # Handle markdown code blocks
                 if "```json" in content:
                     content = content.split("```json")[1].split("```")[0]
                 elif "```" in content:
@@ -217,7 +210,6 @@ Important:
 
                 result = json.loads(content.strip())
                 commands = result.get("commands", [])
-                # Ensure all commands are strings
                 return [str(cmd) for cmd in commands if cmd]
             except json.JSONDecodeError:
                 logger.warning(f"Failed to parse commands JSON: {content}")
@@ -277,10 +269,8 @@ class SummarizationServicer(summarization_pb2_grpc.SummarizationServiceServicer)
 
         logger.info(f"Summarizing {len(findings)} findings for account {account_id}")
 
-        # Group findings by check_id and service
         grouped = self._group_findings(findings)
 
-        # Create finding groups with LLM summaries
         finding_groups = []
         action_items = []
 
@@ -313,7 +303,6 @@ class SummarizationServicer(summarization_pb2_grpc.SummarizationServiceServicer)
 
         logger.info("Finished processing all groups.")
 
-        # Calculate risk summary
         risk_summary = self._calculate_risk_summary(findings)
 
         return summarization_pb2.SummarizeFindingsResponse(
@@ -388,37 +377,29 @@ class SummarizationServicer(summarization_pb2_grpc.SummarizationServiceServicer)
         service, check_id = group_key.split(":", 1)
         region = first.region or "us-east-1"
 
-        # Count failed findings
         failed_findings = [
             f for f in findings if f.status == summarization_pb2.FINDING_STATUS_FAIL
         ]
         failed_count = len(failed_findings)
 
-        # Determine highest severity
         severities = [f.severity for f in findings]
         max_severity = max(severities) if severities else 0
 
-        # Collect resource IDs
         resource_ids = [f.resource_id for f in findings]
 
-        # Generate title
         if failed_count > 0:
             title = f"{failed_count} {service.upper()} resources failed {check_id}"
         else:
             title = f"All {len(findings)} {service.upper()} resources passed {check_id}"
 
-        # Calculate risk score
         risk_score = self._calculate_group_risk_score(findings, max_severity)
 
-        # Determine recommended action
         action = self._determine_action(max_severity, failed_count)
 
-        # Collect compliance frameworks
         compliance = set()
         for f in findings:
             compliance.update(f.compliance)
 
-        # Generate LLM summary and remedy for failed findings
         summary = ""
         remedy = ""
         if failed_count > 0:
@@ -492,7 +473,6 @@ class SummarizationServicer(summarization_pb2_grpc.SummarizationServiceServicer)
         """Create an action item with LLM-generated CLI commands."""
         region = failed_findings[0].region if failed_findings else "us-east-1"
 
-        # Generate remediation commands using LLM
         commands = self.llm.generate_commands(
             service=group.service,
             region=region,

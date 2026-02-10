@@ -34,7 +34,6 @@ export function AddAccountDialog() {
 
   const handleVerify = async () => {
     setIsVerifying(true);
-    // TODO: Call GraphQL mutation to verify account
     setTimeout(() => {
       setIsVerifying(false);
       setIsVerified(true);
@@ -42,7 +41,6 @@ export function AddAccountDialog() {
   };
 
   const handleConnect = async () => {
-    // TODO: Call GraphQL mutation to connect account
     setOpen(false);
     // Reset state
     setStep(1);

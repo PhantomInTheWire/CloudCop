@@ -52,7 +52,6 @@ type ScanTaskResult struct {
 func (c *Coordinator) StartScan(ctx context.Context, config ScanConfig) (*ScanResult, error) {
 	startedAt := time.Now().UTC()
 
-	// Build list of scan tasks
 	var tasks []ScanTask
 	for _, region := range config.Regions {
 		for _, service := range config.Services {
@@ -68,10 +67,8 @@ func (c *Coordinator) StartScan(ctx context.Context, config ScanConfig) (*ScanRe
 		return nil, fmt.Errorf("no valid scan tasks: check that services have registered scanners")
 	}
 
-	// Execute tasks in parallel
 	results := c.executeParallel(ctx, tasks)
 
-	// Aggregate results
 	var allFindings []Finding
 	var scanErrors []error
 
@@ -83,7 +80,6 @@ func (c *Coordinator) StartScan(ctx context.Context, config ScanConfig) (*ScanRe
 		allFindings = append(allFindings, result.Findings...)
 	}
 
-	// Count passed and failed checks
 	passedChecks := 0
 	failedChecks := 0
 	for _, f := range allFindings {
@@ -120,14 +116,12 @@ func (c *Coordinator) executeParallel(ctx context.Context, tasks []ScanTask) []S
 	resultsChan := make(chan ScanTaskResult, len(tasks))
 	tasksChan := make(chan ScanTask, len(tasks))
 
-	// Start worker pool
 	for i := 0; i < maxWorkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
 			for task := range tasksChan {
-				// Check for context cancellation before processing
 				select {
 				case <-ctx.Done():
 					resultsChan <- ScanTaskResult{
@@ -140,7 +134,6 @@ func (c *Coordinator) executeParallel(ctx context.Context, tasks []ScanTask) []S
 
 				result := ScanTaskResult{Task: task}
 
-				// Create scanner for this service/region
 				factory, exists := c.scanners[task.Service]
 				if !exists {
 					result.Error = fmt.Errorf("no scanner registered for service %s", task.Service)
@@ -148,13 +141,11 @@ func (c *Coordinator) executeParallel(ctx context.Context, tasks []ScanTask) []S
 					continue
 				}
 
-				// Create regional config
 				regionalCfg := c.cfg.Copy()
 				regionalCfg.Region = task.Region
 
 				scanner := factory(regionalCfg, task.Region, c.accountID)
 
-				// Execute scan with context
 				findings, err := scanner.Scan(ctx, task.Region)
 				if err != nil {
 					result.Error = err
@@ -168,7 +159,6 @@ func (c *Coordinator) executeParallel(ctx context.Context, tasks []ScanTask) []S
 		}()
 	}
 
-	// Send tasks to workers
 	go func() {
 		for _, task := range tasks {
 			tasksChan <- task
@@ -176,13 +166,11 @@ func (c *Coordinator) executeParallel(ctx context.Context, tasks []ScanTask) []S
 		close(tasksChan)
 	}()
 
-	// Wait for all workers to complete
 	go func() {
 		wg.Wait()
 		close(resultsChan)
 	}()
 
-	// Collect results
 	var results []ScanTaskResult
 	for result := range resultsChan {
 		results = append(results, result)
